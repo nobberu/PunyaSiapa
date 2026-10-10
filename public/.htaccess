@@ -1,0 +1,12 @@
+Options -Multiviews
+RewriteEngine On
+
+# Sesuaikan jika nama folder/URL aplikasi berbeda.
+RewriteBase /PunyaSiapa/public/
+
+# File atau folder yang benar-benar ada dilayani langsung (css, js, img, uploads).
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Sisanya masuk ke front controller.
+RewriteRule ^(.*)$ index.php [QSA,L]
