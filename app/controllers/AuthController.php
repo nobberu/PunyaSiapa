@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../models/Pengguna.php';
-require_once __DIR__ . '/../src/http/request.php';
+require_once __DIR__ . '/../../src/http/request.php';
 
 use punyaSiapa\Http\Request;
 
@@ -13,12 +13,12 @@ class AuthController
 {
     public function showLogin()
     {
-        require __DIR__ . '/../views/auth/login.php';
+        require __DIR__ . '/../views/login.php';
     }
 
     public function showRegister()
     {
-        require __DIR__ . '/../views/auth/register.php';
+        require __DIR__ . '/../views/register.php';
     }
 
     public function login()
@@ -33,7 +33,7 @@ class AuthController
         }
 
         $error = 'Username atau password salah.';
-        require __DIR__ . '/../views/auth/login.php';
+        require __DIR__ . '/../views/login.php';
     }
 
     public function register()
@@ -55,7 +55,7 @@ class AuthController
         }
 
         if ($error !== null) {
-            require __DIR__ . '/../views/auth/register.php';
+            require __DIR__ . '/../views/register.php';
             return;
         }
 
@@ -66,14 +66,14 @@ class AuthController
             'nomor_kontak' => $nomorKontak,
         ]);
 
-        header('Location: ' . BASE_PATH . '/auth/login');
+        header('Location: ' . BASE_PATH . '/login');
         exit;
     }
 
     public function logout()
     {
         Auth::logout();
-        header('Location: ' . BASE_PATH . '/auth/login');
+        header('Location: ' . BASE_PATH . '/login');
         exit;
     }
 }

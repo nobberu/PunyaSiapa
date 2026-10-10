@@ -1,33 +1,18 @@
 <?php
 
-/**
- * Definisi rute aplikasi.
- *
- * File ini di-require dari Kernel; variabel $router sudah tersedia.
- * Handler bisa berupa closure atau string "Controller@method".
- */
+/** @var Router $router */
 
 // Beranda
-$router->get('/', 'HomeController@index');
-
-// Contoh closure dengan parameter dinamis
-$router->get('/halo/{nama}', function ($nama) {
-    echo 'Halo, ' . htmlspecialchars($nama) . '!';
-});
+$router->get("/", "HomeController@index");
 
 // Contoh 405 Method Not Allowed
-$router->post('/', function () {
-    echo 'POST ke beranda';
+$router->post("/", function () {
+    echo "POST ke beranda";
 });
 
 // Auth
-$router->get('/auth/login',     'AuthController@showLogin');
-$router->post('/auth/login',    'AuthController@login');
-$router->get('/auth/register',  'AuthController@showRegister');
-$router->post('/auth/register', 'AuthController@register');
-$router->post('/auth/logout',   'AuthController@logout');
-
-// CRUD (aktifkan setelah controller dibuat):
-// $router->get('/barang',          'BarangController@index');
-// $router->get('/barang/{id:\d+}', 'BarangController@detail');
-// $router->post('/barang',         'BarangController@store');
+$router->get("/login", "AuthController@showLogin");
+$router->post("/login", "AuthController@login");
+$router->get("/register", "AuthController@showRegister");
+$router->post("/register", "AuthController@register");
+$router->post("/logout", "AuthController@logout");

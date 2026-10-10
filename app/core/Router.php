@@ -2,17 +2,8 @@
 
 use punyaSiapa\Http\Request;
 
-/**
- * Router inti PunyaSIapa.
- *
- * Router sederhana berbasis tabel rute + regex, tanpa dependency maupun
- * autoloader. Mendukung placeholder dinamis:
- *   /barang/{id}        -> cocokkan segment apa pun
- *   /barang/{id:\d+}    -> cocokkan dengan pola regex kustom
- */
 class Router
 {
-    /** @var array<int, array{method:string, regex:string, handler:mixed}> */
     private $routes = [];
 
     public function get(string $path, $handler): void    { $this->add('GET', $path, $handler); }
@@ -20,16 +11,8 @@ class Router
     public function put(string $path, $handler): void    { $this->add('PUT', $path, $handler); }
     public function delete(string $path, $handler): void { $this->add('DELETE', $path, $handler); }
 
-    /**
-     * Daftarkan satu rute.
-     *
-     * @param string $method  GET|POST|PUT|DELETE
-     * @param string $path    pola path, mis. "/barang/{id:\d+}"
-     * @param mixed  $handler closure, atau string "Controller@method"
-     */
     public function add(string $method, string $path, $handler): void
     {
-        // Ubah "/barang/{id}" atau "/barang/{id:\d+}" menjadi named-group regex
         $pattern = preg_replace_callback(
             '#\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}#',
             function ($m) {
@@ -46,12 +29,6 @@ class Router
         ];
     }
 
-    /**
-     * Cocokkan request dengan tabel rute.
-     *
-     * @return array{0:string, 1:mixed, 2:array}
-     *   status = 'found' | 'method_not_allowed' | 'not_found'
-     */
     public function dispatch(Request $request): array
     {
         $method  = $request->method();
@@ -61,7 +38,6 @@ class Router
         foreach ($this->routes as $route) {
             if (preg_match($route['regex'], $uri, $matches)) {
                 if ($route['method'] === $method) {
-                    // Ambil hanya named captures (parameter)
                     $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
                     return ['found', $route['handler'], $params];
                 }
@@ -76,9 +52,6 @@ class Router
         return ['not_found', null, []];
     }
 
-    /**
-     * Jalankan rute yang cocok dan kirim respons.
-     */
     public function run(Request $request): void
     {
         list($status, $handler, $params) = $this->dispatch($request);
@@ -100,9 +73,6 @@ class Router
         }
     }
 
-    /**
-     * Panggil handler: closure/callable atau "Controller@method".
-     */
     private function invoke($handler, array $params): void
     {
         if (is_callable($handler)) {
