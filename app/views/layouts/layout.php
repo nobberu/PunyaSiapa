@@ -2,6 +2,8 @@
 /** @var string $content */
 /** @var string|null $title */
 $title = $title ?? 'PunyaSIapa';
+
+$user = Auth::check() ? Auth::user() : null;
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -12,6 +14,22 @@ $title = $title ?? 'PunyaSIapa';
     <link rel="stylesheet" href="<?= BASE_PATH ?>/css/global.css">
 </head>
 <body>
+    <header class="site-header">
+        <a class="brand" href="<?= BASE_PATH ?>/">PunyaSIapa</a>
+
+        <nav class="site-nav">
+            <?php if ($user !== null): ?>
+                <span class="user-name"><?= htmlspecialchars($user['nama']) ?></span>
+                <form method="post" action="<?= BASE_PATH ?>/logout">
+                    <button type="submit">Keluar</button>
+                </form>
+            <?php else: ?>
+                <a href="<?= BASE_PATH ?>/login">Masuk</a>
+                <a href="<?= BASE_PATH ?>/register">Daftar</a>
+            <?php endif; ?>
+        </nav>
+    </header>
+
     <?= $content ?>
 
     <script src="<?= BASE_PATH ?>/js/global.js"></script>

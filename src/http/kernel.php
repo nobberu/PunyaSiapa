@@ -36,6 +36,8 @@ class Kernel
         // Registri kelas yang dirujuk rute (belum ada autoloader).
         require_once __DIR__ . '/../../app/controllers/HomeController.php';
         require_once __DIR__ . '/../../app/controllers/AuthController.php';
+        require_once __DIR__ . '/../../app/controllers/KehilanganController.php';
+        require_once __DIR__ . '/../../app/controllers/DitemukanController.php';
 
         \Auth::start();
 
