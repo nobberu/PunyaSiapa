@@ -1,16 +1,11 @@
 <?php
 /** @var string|null $error */
 $error = $error ?? null;
+
+$title = 'Daftar - PunyaSIapa';
+
+ob_start();
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Daftar - PunyaSIapa</title>
-    <link rel="stylesheet" href="<?= BASE_PATH ?>/css/global.css">
-</head>
-<body>
     <main class="auth">
         <h1>Daftar</h1>
 
@@ -40,7 +35,6 @@ $error = $error ?? null;
 
         <p>Sudah punya akun? <a href="<?= BASE_PATH ?>/login">Masuk</a></p>
     </main>
-
-    <script src="<?= BASE_PATH ?>/js/global.js"></script>
-</body>
-</html>
+<?php
+$content = ob_get_clean();
+require __DIR__ . '/layouts/layout.php';
