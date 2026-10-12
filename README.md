@@ -64,10 +64,6 @@ To run this project locally:
 
 ### Prerequisites
 
-* Web Server (Apache/Nginx) - e.g., XAMPP, Laragon, or MAMP.
-
-* **Important for Apache users:** Make sure `mod_rewrite` is enabled in your `httpd.conf` for the MVC routing to work.
-
 * PHP >= 7.4 (Ensure `pdo_pgsql` and `pgsql` extensions are enabled in your `php.ini`)
 
 * PostgreSQL
@@ -78,46 +74,38 @@ To run this project locally:
 
 1. **Clone the repository:**
 
-   ```
-   git clone https://github.com/yourusername/punyasiapa.git
-   
+   ```bash
+   git clone https://github.com/nobberu/punyasiapa.git
    ```
 
-2. **Move to server directory:**
-   Move the `PunyaSIapa` folder into your web server's root directory (e.g., `htdocs` for XAMPP or `www` for Laragon).
-
-3. **Database Configuration:**
+2. **Database Configuration:**
 
    * Open your database manager (e.g., pgAdmin or DBeaver).
-
    * Create a new database named `punyasiapa`.
-
    * Import the SQL file located in `database/example.sql` into your new database.
 
-4. **Environment Setup:**
+3. **Environment Setup:**
 
-   * Navigate to `app/config/config.php` (create it if it doesn't exist yet).
+   * Copy `app/config/config.example.php` and rename it to `config.php`.
+   * Update the database credentials to match your local setup:
 
-   * Update the database credentials and `BASE_URL` to match your local setup:
-
-     ```
+     ```php
      <?php
-     define('BASEURL', 'http://localhost/PunyaSIapa/public');
-     
-     define('DB_HOST', 'localhost');
-     define('DB_USER', 'postgres'); // Update to your local Postgres user
-     define('DB_PASS', '');         // Update to your local Postgres password
-     define('DB_NAME', 'punyasiapa');
-     
+     $db_host = 'localhost';
+     $db_port = '5432';
+     $db_user = 'postgres'; // Update to your local Postgres user
+     $db_pass = '';         // Update to your local Postgres password
+     $db_name = 'punyasiapa';
      ```
 
-5. **Run the Application:**
-   Open your web browser and navigate to the `BASEURL` (e.g., `http://localhost/PunyaSIapa/public`).
+4. **Run the Application:**
 
-### Important Note Regarding Routing (404 Errors)
+   From the project root directory, run the built-in PHP server:
 
-This application uses a Custom MVC Routing system managed by `public/.htaccess`.
+   ```bash
+   php -S localhost:<yourport> -t public public/index.php
+   ```
 
-* If you are using **Apache (XAMPP/Laragon)**, the app is ready to use. Just ensure the `mod_rewrite` extension is active.
+   Then open your web browser and navigate to `http://localhost:<yourport>`.
 
-* If you experience a *404 Not Found* error when navigating away from the home page, please check your Apache `AllowOverride All` settings to ensure the `.htaccess` file is being read by the server.
+
