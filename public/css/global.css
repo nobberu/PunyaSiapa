@@ -1,9 +1,23 @@
 :root {
-  --yellow-100: #fef9c3;
-  --yellow-200: #fef08a;
-  --yellow-300: #fde047;
-  --yellow-400: #facc15;
-  --yellow-500: #eab308;
-  --yellow-600: #ca8a04;
-  --yellow-700: #a16207;
+    --yellow-10: #fffdf5;
+    --yellow-50: #fefce8;
+    --yellow-100: #fef9c3;
+    --yellow-200: #fef08a;
+    --yellow-300: #fde047;
+    --yellow-400: #facc15;
+    --yellow-500: #eab308;
+    --yellow-600: #ca8a04;
+    --yellow-700: #a16207;
+}
+
+html,
+body {
+    background-color: var(--yellow-10);
+}
+
+body {
+    font-family: "Roboto Flex", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-weight: 400;
+    font-optical-sizing: auto;
+    line-height: 1.5;
 }
