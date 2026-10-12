@@ -1,5 +1,4 @@
 <?php
-/** @var string|null $error */
 $error = $error ?? null;
 
 $title = 'Daftar - PunyaSiapa';
