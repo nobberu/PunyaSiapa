@@ -13,17 +13,32 @@ class AuthController
 {
     public function showLogin()
     {
-        echo View::render('login');
+        echo View::render('login', [
+            'csrfToken' => Auth::csrfToken(),
+        ]);
     }
 
     public function showRegister()
     {
-        echo View::render('register');
+        echo View::render('register', [
+            'csrfToken' => Auth::csrfToken(),
+        ]);
     }
 
     public function login()
     {
         $r        = new Request();
+        // reject jika token formulir nya tidak cocok sama session
+        if (!Auth::verifyCsrf($r->post('_csrf'))) {
+            http_response_code(403);
+
+            echo View::render('login', [
+                'error'     => 'Permintaan tidak valid. Muat ulang halaman dan coba lagi.',
+                'csrfToken' => Auth::csrfToken(),
+            ]);
+
+            return;
+        }
         $username = trim((string) $r->post('username'));
         $password = (string) $r->post('password');
 
@@ -33,29 +48,60 @@ class AuthController
         }
 
         $error = 'Username atau password salah.';
-        echo View::render('login', ['error' => $error]);
+
+        echo View::render('login', [
+            'error'     => $error,
+            'csrfToken' => Auth::csrfToken(),
+        ]);
     }
 
     public function register()
     {
         $r           = new Request();
+        // reject pendaftaran jika token formulirnya tidak cocok dengan session
+        if (!Auth::verifyCsrf($r->post('_csrf'))) {
+            http_response_code(403);
+
+            echo View::render('register', [
+                'error'     => 'Permintaan tidak valid. Muat ulang halaman dan coba lagi.',
+                'csrfToken' => Auth::csrfToken(),
+            ]);
+
+            return;
+        }
         $nama        = trim((string) $r->post('nama'));
         $username    = trim((string) $r->post('username'));
         $password    = (string) $r->post('password');
         $nomorKontak = trim((string) $r->post('nomor_kontak'));
 
-        // Validasi sederhana
+        // Hitung panjang password
+        $passwordLength = function_exists('mb_strlen')
+            ? mb_strlen($password, 'UTF-8')
+            : strlen($password);
+
         $error = null;
-        if ($nama === '' || $username === '' || $password === '' || $nomorKontak === '') {
+
+        if (
+            $nama === '' ||
+            $username === '' ||
+            $password === '' ||
+            $nomorKontak === ''
+        ) {
             $error = 'Semua kolom wajib diisi.';
-        } elseif (strlen($password) < 6) {
-            $error = 'Password minimal 6 karakter.';
+        } elseif ($passwordLength < 15) {
+            $error = 'Password minimal 15 karakter.';
+        } elseif (strlen($password) > 72) {
+            $error = 'Password terlalu panjang; maksimal 72 byte.';
         } elseif ((new Pengguna())->findByUsername($username)) {
             $error = 'Username sudah dipakai.';
         }
 
         if ($error !== null) {
-            echo View::render('register', ['error' => $error]);
+            echo View::render('register', [
+                'error'     => $error,
+                'csrfToken' => Auth::csrfToken(),
+            ]);
+
             return;
         }
 
@@ -72,7 +118,15 @@ class AuthController
 
     public function logout()
     {
+        $r = new Request();
+        if (!Auth::verifyCsrf($r->post('_csrf'))) {
+            http_response_code(403);
+            echo 'Permintaan tidak valid. Muat ulang halaman dan coba lagi.';
+            return;
+        }
+
         Auth::logout();
+
         header('Location: ' . BASE_PATH . '/login');
         exit;
     }

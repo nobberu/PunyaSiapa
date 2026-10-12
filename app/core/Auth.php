@@ -21,9 +21,32 @@ class Auth
         }
     }
 
+    /** Ambil token CSRF untuk formulir dalam session saat ini. */
+    public static function csrfToken(): string
+    {
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        return $_SESSION['csrf_token'];
+    }
+
+    /** Periksa apakah token formulir cocok dengan token session. */
+    public static function verifyCsrf(mixed $token): bool
+    {
+        return is_string($token)
+            && isset($_SESSION['csrf_token'])
+            && is_string($_SESSION['csrf_token'])
+            && hash_equals($_SESSION['csrf_token'], $token);
+    }
+
     /** Validasi kredensial; jika benar langsung mulai login. */
     public static function attempt(string $username, string $password): bool
     {
+        // cegah password lebih dari 72 byte, karena bcrypt hanya memproses 72 byte.
+        if (strlen($password) > 72) {
+            return false;
+        }
         $user = (new Pengguna())->findByUsername($username);
         if ($user && password_verify($password, $user['password'])) {
             self::login($user);
