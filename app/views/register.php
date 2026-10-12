@@ -3,8 +3,6 @@
 $error = $error ?? null;
 
 $title = 'Daftar - PunyaSiapa';
-
-ob_start();
 ?>
     <main class="auth">
         <h1>Daftar</h1>
@@ -35,6 +33,3 @@ ob_start();
 
         <p>Sudah punya akun? <a href="<?= BASE_PATH ?>/login">Masuk</a></p>
     </main>
-<?php
-$content = ob_get_clean();
-require __DIR__ . '/layouts/layout.php';

@@ -13,12 +13,12 @@ class AuthController
 {
     public function showLogin()
     {
-        require __DIR__ . '/../views/login.php';
+        echo View::render('login');
     }
 
     public function showRegister()
     {
-        require __DIR__ . '/../views/register.php';
+        echo View::render('register');
     }
 
     public function login()
@@ -33,7 +33,7 @@ class AuthController
         }
 
         $error = 'Username atau password salah.';
-        require __DIR__ . '/../views/login.php';
+        echo View::render('login', ['error' => $error]);
     }
 
     public function register()
@@ -55,7 +55,7 @@ class AuthController
         }
 
         if ($error !== null) {
-            require __DIR__ . '/../views/register.php';
+            echo View::render('register', ['error' => $error]);
             return;
         }
 
