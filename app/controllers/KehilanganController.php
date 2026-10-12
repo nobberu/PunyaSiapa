@@ -6,13 +6,13 @@ class KehilanganController
 {
     public function index()
     {
-        require __DIR__ . '/../views/kehilangan/index.php';
+        echo View::render('kehilangan/index');
     }
 
     public function show($id)
     {
         Auth::requireLogin();
 
-        require __DIR__ . '/../views/kehilangan/[id].php';
+        echo View::render('kehilangan/[id]', ['id' => $id]);
     }
 }

@@ -6,13 +6,13 @@ class DitemukanController
 {
     public function index()
     {
-        require __DIR__ . '/../views/ditemukan/index.php';
+        echo View::render('ditemukan/index');
     }
 
     public function show($id)
     {
         Auth::requireLogin();
 
-        require __DIR__ . '/../views/ditemukan/[id].php';
+        echo View::render('ditemukan/[id]', ['id' => $id]);
     }
 }
