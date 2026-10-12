@@ -2,7 +2,7 @@
 /** @var string|null $error */
 $error = $error ?? null;
 
-$title = 'Masuk - PunyaSIapa';
+$title = 'Masuk - PunyaSiapa';
 
 ob_start();
 ?>

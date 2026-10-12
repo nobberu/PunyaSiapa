@@ -1,7 +1,7 @@
 <?php
 /** @var string $content */
 /** @var string|null $title */
-$title = $title ?? 'PunyaSIapa';
+$title = $title ?? "PunyaSIapa";
 
 $user = Auth::check() ? Auth::user() : null;
 ?>
@@ -15,11 +15,13 @@ $user = Auth::check() ? Auth::user() : null;
 </head>
 <body>
     <header class="site-header">
-        <a class="brand" href="<?= BASE_PATH ?>/">PunyaSIapa</a>
+        <a class="brand" href="<?= BASE_PATH ?>/">PunyaSiapa</a>
 
         <nav class="site-nav">
             <?php if ($user !== null): ?>
-                <span class="user-name"><?= htmlspecialchars($user['nama']) ?></span>
+                <span class="user-name">Hello, <?= htmlspecialchars(
+                    $user["nama"],
+                ) ?></span>
                 <form method="post" action="<?= BASE_PATH ?>/logout">
                     <button type="submit">Keluar</button>
                 </form>

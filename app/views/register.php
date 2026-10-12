@@ -2,7 +2,7 @@
 /** @var string|null $error */
 $error = $error ?? null;
 
-$title = 'Daftar - PunyaSIapa';
+$title = 'Daftar - PunyaSiapa';
 
 ob_start();
 ?>
