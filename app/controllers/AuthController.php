@@ -92,8 +92,6 @@ class AuthController
             $error = 'Password minimal 15 karakter.';
         } elseif (strlen($password) > 72) {
             $error = 'Password terlalu panjang; maksimal 72 byte.';
-        } elseif ((new Pengguna())->findByUsername($username)) {
-            $error = 'Username sudah dipakai.';
         }
 
         if ($error !== null) {
@@ -105,12 +103,21 @@ class AuthController
             return;
         }
 
-        (new Pengguna())->create([
+        $idPengguna = (new Pengguna())->create([
             'nama'         => $nama,
             'username'     => $username,
             'password'     => $password,
             'nomor_kontak' => $nomorKontak,
         ]);
+
+        if ($idPengguna === null) {
+            echo View::render('register', [
+                'error'     => 'Username sudah dipakai.',
+                'csrfToken' => Auth::csrfToken(),
+            ]);
+
+            return;
+        }
 
         header('Location: ' . BASE_PATH . '/login');
         exit;
