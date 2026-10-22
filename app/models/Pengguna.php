@@ -37,15 +37,16 @@ class Pengguna
     }
 
     /**
-     * Simpan user baru (password di-hash oleh pengguna).
+     * simpan user baru dan kembalikan ID jika berhasil
      *
-     * @return int id_pengguna yang baru dibuat
+     * @return int|null ID pengguna baru, atau null jika username sudah digunakan
      */
-    public function create(array $data): int
+    public function create(array $data): ?int
     {
         $sql = 'INSERT INTO pengguna (nama, username, password, role, nomor_kontak)
-                VALUES (:nama, :username, :password, :role, :nomor_kontak)
-                RETURNING id_pengguna';
+            VALUES (:nama, :username, :password, :role, :nomor_kontak)
+            ON CONFLICT (username) DO NOTHING
+            RETURNING id_pengguna';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
@@ -56,6 +57,8 @@ class Pengguna
             'nomor_kontak' => $data['nomor_kontak'],
         ]);
 
-        return (int) $stmt->fetchColumn();
+        $id = $stmt->fetchColumn();
+
+        return $id === false ? null : (int) $id;
     }
 }
