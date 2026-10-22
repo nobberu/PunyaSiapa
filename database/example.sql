@@ -23,9 +23,12 @@ CREATE TABLE kategori (
     CONSTRAINT kategori_pkey PRIMARY KEY (id_kategori)
 );
 
+
+
 -- ------------------------------------------------------------------
 -- postingan
 -- ------------------------------------------------------------------
+create type stts_tampil as enum ('tampil', 'dihapus');
 CREATE TABLE postingan (
     id_postingan         BIGSERIAL    NOT NULL,
     id_pengguna          BIGINT       NOT NULL,
@@ -38,7 +41,7 @@ CREATE TABLE postingan (
     jenis_postingan      VARCHAR(20)  NOT NULL,
     status_barang        VARCHAR(20)  NOT NULL,
     created_at           TIMESTAMP    NOT NULL,
-    status_tampil        VARCHAR(25),
+    status_tampil        stts_tampil NOT NULL DEFAULT 'tampil',
     CONSTRAINT postingan_pkey PRIMARY KEY (id_postingan)
 );
 
