@@ -23,7 +23,7 @@ $title = 'Daftar - PunyaSiapa';
         <label>
             Password
             <input
-                type="password" name="password" required minlength="15" maxlength="72" autocomplete="new-password">
+                type="password" name="password" required minlength="8" maxlength="72" autocomplete="new-password">
         </label>
         <label>
             Nomor Kontak

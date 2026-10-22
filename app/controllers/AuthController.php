@@ -88,8 +88,8 @@ class AuthController
             $nomorKontak === ''
         ) {
             $error = 'Semua kolom wajib diisi.';
-        } elseif ($passwordLength < 15) {
-            $error = 'Password minimal 15 karakter.';
+        } elseif ($passwordLength < 8) {
+            $error = 'Password minimal 8 karakter.';
         } elseif (strlen($password) > 72) {
             $error = 'Password terlalu panjang; maksimal 72 byte.';
         } elseif ((new Pengguna())->findByUsername($username)) {
