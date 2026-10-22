@@ -24,6 +24,8 @@ $user = Auth::check() ? Auth::user() : null;
         <a class="brand" href="<?= BASE_PATH ?>/">PunyaSiapa</a>
 
         <nav class="site-nav">
+            <a href="<?= BASE_PATH ?>/kehilangan">Kehilangan</a>
+            <a href="<?= BASE_PATH ?>/ditemukan">Ditemukan</a>
             <?php if ($user !== null): ?>
                 <span class="user-name">Hello, <?= htmlspecialchars($user["nama"],) ?></span>
                 <form method="post" action="<?= BASE_PATH ?>/logout">
