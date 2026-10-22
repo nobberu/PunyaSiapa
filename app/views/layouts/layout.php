@@ -2,7 +2,7 @@
 
 /** @var string $content */
 /** @var string|null $title */
-$title = $title ?? "PunyaSIapa";
+$title = $title ?? "PunyaSiapa";
 
 $user = Auth::check() ? Auth::user() : null;
 ?>
