@@ -1,1 +1,3 @@
 app/config/config.php
+public/uploads/*/*
+!public/uploads/*/.gitkeep

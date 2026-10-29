@@ -54,7 +54,7 @@ CREATE TABLE komentar (
     id_postingan         BIGINT       NOT NULL,
     isi_komentar         TEXT         NOT NULL,
     waktu_komentar       TIMESTAMP    NOT NULL,
-    status_tampil        VARCHAR(25),
+    status_tampil        stts_tampil NOT NULL DEFAULT 'tampil',
     CONSTRAINT komentar_pkey PRIMARY KEY (id_komentar)
 );
 

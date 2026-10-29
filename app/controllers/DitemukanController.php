@@ -3,6 +3,8 @@
 require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../models/Postingan.php';
 require_once __DIR__ . '/../models/Kategori.php';
+require_once __DIR__ . '/../models/Komentar.php';
+require_once __DIR__ . '/../models/Claim.php';
 require_once __DIR__ . '/../../src/http/request.php';
 
 use punyaSiapa\Http\Request;
@@ -13,7 +15,11 @@ use punyaSiapa\Http\Request;
 class DitemukanController
 {
     private const JENIS = 'ditemukan';
+    private const FOLDER = 'penemuan';
     private const STATUS_BARANG = ['aktif', 'selesai'];
+    private const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+    private const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+    private const ALLOWED_MIMES = ['image/jpeg', 'image/png'];
 
     public function index()
     {
@@ -51,7 +57,7 @@ class DitemukanController
             return;
         }
 
-        [$data, $error] = $this->validate($r);
+        [$data, $error] = $this->validate($r, true);
 
         if ($error !== null) {
             echo View::render('ditemukan/form', [
@@ -89,9 +95,21 @@ class DitemukanController
             return;
         }
 
+        $idInt = (int) $id;
+        $userId = (int) Auth::id();
+        $claimModel = new Claim();
+
+        // Cek apakah user adalah pembuat laporan, admin, atau sudah klaim
+        $hasClaimed = $claimModel->hasUserClaimed($userId, $idInt);
+        $isAuthor = ((int) $postingan['id_pengguna'] === $userId);
+        $canComment = ($isAuthor || Auth::isAdmin() || $hasClaimed);
+
         echo View::render('ditemukan/[id]', [
-            'id'        => (int) $id,
-            'postingan' => $postingan,
+            'id'          => $idInt,
+            'postingan'   => $postingan,
+            'komentar'    => (new Komentar())->forPostingan($idInt),
+            'hasClaimed'  => $hasClaimed,
+            'canComment'  => $canComment,
         ]);
     }
 
@@ -131,7 +149,7 @@ class DitemukanController
             return;
         }
 
-        [$data, $error] = $this->validate($r);
+        [$data, $error] = $this->validate($r, false, $postingan['foto']);
 
         if ($error !== null) {
             echo View::render('ditemukan/form', [
@@ -186,26 +204,25 @@ class DitemukanController
     /* ------------------------------------------------------------------ */
 
     /**
-     * Validasi input form.
+     * Validasi input form dan upload foto.
      *
      * @return array{0:array,1:string|null} [data, pesan error]
      */
-    private function validate(Request $r): array
+    private function validate(Request $r, bool $isCreate = true, ?string $currentPhoto = null): array
     {
         $data = [
             'id_kategori'     => (int) $r->post('id_kategori'),
             'nama_barang'     => trim((string) $r->post('nama_barang')),
             'deskripsi'       => trim((string) $r->post('deskripsi')),
-            'foto'            => trim((string) $r->post('foto')),
             'lokasi_kejadian' => trim((string) $r->post('lokasi_kejadian')),
             'waktu_kejadian'  => trim((string) $r->post('waktu_kejadian')),
             'status_barang'   => (string) $r->post('status_barang'),
+            'foto'            => $currentPhoto ?? (string) $r->post('foto_lama', ''),
         ];
 
         if (
             $data['nama_barang'] === '' ||
             $data['deskripsi'] === '' ||
-            $data['foto'] === '' ||
             $data['lokasi_kejadian'] === '' ||
             $data['waktu_kejadian'] === ''
         ) {
@@ -218,14 +235,6 @@ class DitemukanController
 
         if ($this->len($data['lokasi_kejadian']) > 100) {
             return [$data, 'Lokasi maksimal 100 karakter.'];
-        }
-
-        if ($this->len($data['foto']) > 255) {
-            return [$data, 'Path foto maksimal 255 karakter.'];
-        }
-
-        if (!$this->isValidImagePath($data['foto'])) {
-            return [$data, 'Foto harus berupa path relatif (/...) atau URL http(s).'];
         }
 
         $date = DateTime::createFromFormat('Y-m-d', $data['waktu_kejadian']);
@@ -241,13 +250,73 @@ class DitemukanController
             return [$data, 'Kategori tidak valid.'];
         }
 
+        // Proses berkas upload foto
+        [$photoPath, $photoError] = $this->handleUpload($r, $isCreate, $data['foto']);
+        if ($photoError !== null) {
+            return [$data, $photoError];
+        }
+        $data['foto'] = $photoPath;
+
         return [$data, null];
     }
 
-    /** Path harus relatif ("/...") atau URL http(s). */
-    private function isValidImagePath(string $foto): bool
+    /**
+     * Memvalidasi dan menyimpan berkas foto yang diunggah.
+     *
+     * @return array{0:?string, 1:?string} [path_relatif, pesan_error]
+     */
+    private function handleUpload(Request $r, bool $isRequired, ?string $fallbackPhoto): array
     {
-        return (bool) preg_match('#^(/[^\s]*|https?://[^\s]+)$#i', $foto);
+        $file = $r->file('foto');
+
+        // Tidak ada berkas baru yang dipilih
+        if ($file === null || !isset($file['error']) || $file['error'] === UPLOAD_ERR_NO_FILE) {
+            if ($isRequired || empty($fallbackPhoto)) {
+                return [null, 'Foto wajib diunggah.'];
+            }
+            return [$fallbackPhoto, null];
+        }
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            return [null, 'Terjadi kesalahan saat mengunggah foto.'];
+        }
+
+        if ($file['size'] > self::MAX_FILE_SIZE) {
+            return [null, 'Ukuran foto maksimal 2 MB.'];
+        }
+
+        $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
+        if (!in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
+            return [null, 'Format foto hanya boleh JPG atau PNG.'];
+        }
+
+        // Validasi MIME riil berkas
+        $mime = null;
+        if (class_exists('finfo')) {
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mime = $finfo->file($file['tmp_name']);
+        } elseif (function_exists('mime_content_type')) {
+            $mime = mime_content_type($file['tmp_name']);
+        }
+
+        if ($mime !== null && !in_array($mime, self::ALLOWED_MIMES, true)) {
+            return [null, 'Berkas harus berupa gambar JPG atau PNG yang valid.'];
+        }
+
+        $uploadDir = __DIR__ . '/../../public/uploads/' . self::FOLDER;
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $normalizedExt = ($ext === 'jpeg') ? 'jpg' : $ext;
+        $filename = self::JENIS . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $normalizedExt;
+        $destination = $uploadDir . '/' . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            return [null, 'Gagal menyimpan berkas foto ke server.'];
+        }
+
+        return ['/uploads/' . self::FOLDER . '/' . $filename, null];
     }
 
     private function len(string $value): int

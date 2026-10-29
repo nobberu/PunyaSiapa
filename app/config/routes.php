@@ -34,3 +34,11 @@ $router->get("/ditemukan/{id:\d+}", "DitemukanController@show");
 $router->get("/ditemukan/{id:\d+}/edit", "DitemukanController@edit");
 $router->post("/ditemukan/{id:\d+}", "DitemukanController@update");
 $router->post("/ditemukan/{id:\d+}/delete", "DitemukanController@destroy");
+
+// Komentar
+$router->post("/kehilangan/{id:\d+}/komentar", "KomentarController@store");
+$router->post("/ditemukan/{id:\d+}/komentar", "KomentarController@store");
+$router->post("/komentar/{id:\d+}/delete", "KomentarController@destroy");
+
+// Klaim
+$router->post("/ditemukan/{id:\d+}/claim", "ClaimController@store");
