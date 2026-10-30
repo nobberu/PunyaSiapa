@@ -16,10 +16,10 @@ class Request
     private $files;
 
     public function __construct(
-        array $get = null,
-        array $post = null,
-        array $server = null,
-        array $files = null
+        ?array $get = null,
+        ?array $post = null,
+        ?array $server = null,
+        ?array $files = null
     ) {
         $this->get    = $get    ?? $_GET;
         $this->post   = $post   ?? $_POST;

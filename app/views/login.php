@@ -1,29 +1,31 @@
 <?php
 $error = $error ?? null;
-$csrfToken = $csrfToken ?? '';
-
-$title = 'Masuk - PunyaSiapa';
+$csrfToken = $csrfToken ?? "";
+$title = "Masuk - PunyaSiapa";
 ?>
 <main class="auth">
     <h1>Masuk</h1>
 
     <?php if ($error !== null): ?>
-        <p class="error"><?= htmlspecialchars($error) ?></p>
+        <div class="error" role="alert"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
     <form method="post" action="<?= BASE_PATH ?>/login">
         <input
             type="hidden"
             name="_csrf"
-            value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-        <label>
-            Username
-            <input type="text" name="username" required autofocus>
-        </label>
-        <label>
-            Password
-            <input type="password" name="password" required>
-        </label>
+            value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, "UTF-8") ?>">
+
+        <div class="inputGroup">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required autofocus autocomplete="username">
+        </div>
+
+        <div class="inputGroup">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required autocomplete="current-password">
+        </div>
+
         <button type="submit">Masuk</button>
     </form>
 
