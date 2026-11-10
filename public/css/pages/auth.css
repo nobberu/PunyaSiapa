@@ -1,0 +1,42 @@
+.auth {
+    width: 100%;
+    max-width: 28rem;
+    margin: auto;
+    padding: 2.5rem 2rem;
+    background: var(--surface-container);
+    border-radius: var(--shape-panel);
+}
+
+.auth h1 {
+    max-width: 10ch;
+    margin-bottom: 0.5rem;
+    font-size: clamp(2.25rem, 8vw, 3.5rem);
+    font-weight: 600;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+}
+
+.auth form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.125rem;
+    width: 100%;
+    margin-top: 2rem;
+}
+
+.auth-switch {
+    margin-top: 1.5rem;
+    color: var(--on-surface-variant);
+    font-size: 0.875rem;
+    text-align: center;
+}
+.auth-switch a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+    .auth { padding: 2rem 1.25rem; border-radius: var(--radius-xl) var(--radius-xl) var(--radius-lg) var(--radius-lg); }
+}

@@ -2,12 +2,13 @@
 $error = $error ?? null;
 $csrfToken = $csrfToken ?? '';
 $title = 'Daftar - PunyaSiapa';
+$styles = ['pages/auth'];
 ?>
 <main class="auth">
-    <h1>Daftar</h1>
+    <h1 class="page-title">Daftar</h1>
 
     <?php if ($error !== null): ?>
-        <div class="error" role="alert"><?= htmlspecialchars($error) ?></div>
+        <div class="alert alert-error" role="alert"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
     <form method="post" action="<?= BASE_PATH ?>/register">
@@ -16,8 +17,8 @@ $title = 'Daftar - PunyaSiapa';
             name="_csrf"
             value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
 
-        <div class="inputGroup">
-            <label for="nama">Nama</label>
+        <div class="field">
+            <label class="field-label" for="nama">Nama</label>
             <input
                 type="text"
                 id="nama"
@@ -27,8 +28,8 @@ $title = 'Daftar - PunyaSiapa';
                 autocomplete="name">
         </div>
 
-        <div class="inputGroup">
-            <label for="username">Username</label>
+        <div class="field">
+            <label class="field-label" for="username">Username</label>
             <input
                 type="text"
                 id="username"
@@ -37,8 +38,8 @@ $title = 'Daftar - PunyaSiapa';
                 autocomplete="username">
         </div>
 
-        <div class="inputGroup">
-            <label for="password">Password</label>
+        <div class="field">
+            <label class="field-label" for="password">Password</label>
             <input
                 type="password"
                 id="password"
@@ -49,8 +50,8 @@ $title = 'Daftar - PunyaSiapa';
                 autocomplete="new-password">
         </div>
 
-        <div class="inputGroup">
-            <label for="nomor_kontak">Nomor Kontak</label>
+        <div class="field">
+            <label class="field-label" for="nomor_kontak">Nomor Kontak</label>
             <input
                 type="tel"
                 id="nomor_kontak"
@@ -59,8 +60,8 @@ $title = 'Daftar - PunyaSiapa';
                 autocomplete="tel">
         </div>
 
-        <button type="submit">Daftar</button>
+        <button class="btn btn-block" type="submit">Daftar</button>
     </form>
 
-    <p>Sudah punya akun? <a href="<?= BASE_PATH ?>/login">Masuk</a></p>
+    <p class="auth-switch">Sudah punya akun? <a href="<?= BASE_PATH ?>/login">Masuk</a></p>
 </main>

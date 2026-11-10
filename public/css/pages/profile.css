@@ -1,0 +1,198 @@
+.profile {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    width: 100%;
+    max-width: 60rem;
+    margin: 0 auto;
+}
+
+.profile-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2.5rem;
+    background: var(--primary);
+    border-radius: var(--shape-panel);
+    color: var(--on-primary);
+}
+
+.profile-hero-avatar {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 5.5rem;
+    height: 5.5rem;
+    background: var(--surface);
+    border-radius: var(--radius-full);
+    color: var(--primary);
+    font-size: 2.2rem;
+    font-weight: 600;
+}
+
+.profile-hero-identity {
+    display: flex;
+    flex: 1 1 14rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    min-width: 0;
+}
+.profile-hero-identity h1 {
+    color: var(--on-primary);
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+    font-weight: 600;
+    line-height: 0.95;
+    letter-spacing: -0.045em;
+    font-variation-settings: "opsz" 144;
+    overflow-wrap: anywhere;
+}
+.profile-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+}
+.profile-hero .chip {
+    background: rgba(255, 255, 255, 0.16);
+    color: var(--on-primary);
+}
+
+.profile-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+.profile-hero .btn-tonal {
+    background: var(--surface);
+    color: var(--primary);
+}
+.profile-hero .btn-tonal:hover {
+    background: var(--surface-container);
+}
+.profile-hero .btn-outlined {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--on-primary);
+}
+.profile-hero .btn-outlined:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+.profile-hero .btn:focus-visible {
+    outline-color: var(--on-primary);
+}
+
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: 1.375rem;
+}
+.stat:nth-child(2) {
+    background: var(--surface-container);
+}
+.stat:nth-child(3) {
+    background: var(--primary);
+}
+
+.stat-value {
+    color: var(--primary);
+    font-size: 2.25rem;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.stat:nth-child(3) .stat-value {
+    color: var(--on-primary);
+}
+
+.stat-label {
+    color: var(--on-surface-variant);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: capitalize;
+}
+.stat:nth-child(3) .stat-label {
+    color: var(--on-primary);
+    opacity: 0.7;
+}
+
+/* Sections */
+.profile-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.profile-section-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.profile-section-header h2 {
+    color: var(--primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+}
+.profile-section-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--on-surface-variant);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+.profile-section-count::before {
+    content: "";
+    width: 1.5rem;
+    height: 2px;
+    background: var(--primary);
+}
+
+.profile-section .empty-state-inline a {
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+    .profile-hero {
+        padding: 2rem 1.5rem;
+        border-radius: var(--radius-xl) var(--radius-xl) var(--radius-lg)
+            var(--radius-lg);
+    }
+    .profile-hero-avatar {
+        width: 4.5rem;
+        height: 4.5rem;
+        font-size: 1.8rem;
+    }
+    .profile-hero-actions {
+        width: 100%;
+    }
+    .profile-hero-actions .btn {
+        flex: 1 1 100%;
+    }
+    .stat {
+        padding: 1.125rem;
+    }
+    .stat-value {
+        font-size: 1.75rem;
+    }
+}
+@media (max-width: 520px) {
+    .profile-stats {
+        grid-template-columns: 1fr;
+    }
+}

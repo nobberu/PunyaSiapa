@@ -21,6 +21,7 @@ class Kernel
         require_once __DIR__ . '/../../app/core/Database.php';
         require_once __DIR__ . '/../../app/core/Auth.php';
         require_once __DIR__ . '/../../app/core/View.php';
+        require_once __DIR__ . '/../../app/core/helpers.php';
 
         require_once __DIR__ . '/../../app/controllers/HomeController.php';
         require_once __DIR__ . '/../../app/controllers/AuthController.php';
@@ -28,6 +29,7 @@ class Kernel
         require_once __DIR__ . '/../../app/controllers/DitemukanController.php';
         require_once __DIR__ . '/../../app/controllers/KomentarController.php';
                 require_once __DIR__ . '/../../app/controllers/ClaimController.php';
+        require_once __DIR__ . '/../../app/controllers/ProfilController.php';
 
         \Auth::start();
 

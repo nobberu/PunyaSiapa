@@ -2,12 +2,13 @@
 $error = $error ?? null;
 $csrfToken = $csrfToken ?? "";
 $title = "Masuk - PunyaSiapa";
+$styles = ['pages/auth'];
 ?>
 <main class="auth">
-    <h1>Masuk</h1>
+    <h1 class="page-title">Masuk</h1>
 
     <?php if ($error !== null): ?>
-        <div class="error" role="alert"><?= htmlspecialchars($error) ?></div>
+        <div class="alert alert-error" role="alert"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
     <form method="post" action="<?= BASE_PATH ?>/login">
@@ -16,18 +17,18 @@ $title = "Masuk - PunyaSiapa";
             name="_csrf"
             value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, "UTF-8") ?>">
 
-        <div class="inputGroup">
-            <label for="username">Username</label>
+        <div class="field">
+            <label class="field-label" for="username">Username</label>
             <input type="text" id="username" name="username" required autofocus autocomplete="username">
         </div>
 
-        <div class="inputGroup">
-            <label for="password">Password</label>
+        <div class="field">
+            <label class="field-label" for="password">Password</label>
             <input type="password" id="password" name="password" required autocomplete="current-password">
         </div>
 
-        <button type="submit">Masuk</button>
+        <button class="btn btn-block" type="submit">Masuk</button>
     </form>
 
-    <p>Belum punya akun? <a href="<?= BASE_PATH ?>/register">Daftar</a></p>
+    <p class="auth-switch">Belum punya akun? <a href="<?= BASE_PATH ?>/register">Daftar</a></p>
 </main>

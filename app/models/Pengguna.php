@@ -36,6 +36,35 @@ class Pengguna
         return $user ?: null;
     }
 
+    public function statistik(int $id): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT
+                (SELECT COUNT(*) FROM postingan
+                    WHERE id_pengguna = :laporan
+                      AND status_tampil IS DISTINCT FROM 'dihapus') AS laporan,
+                (SELECT COUNT(*) FROM komentar
+                    WHERE id_pengguna = :komentar
+                      AND status_tampil IS DISTINCT FROM 'dihapus') AS komentar,
+                (SELECT COUNT(*) FROM claim
+                    WHERE id_pengguna = :klaim) AS klaim"
+        );
+
+        $stmt->execute([
+            'laporan'  => $id,
+            'komentar' => $id,
+            'klaim'    => $id,
+        ]);
+
+        $row = $stmt->fetch() ?: [];
+
+        return [
+            'laporan'  => (int) ($row['laporan'] ?? 0),
+            'komentar' => (int) ($row['komentar'] ?? 0),
+            'klaim'    => (int) ($row['klaim'] ?? 0),
+        ];
+    }
+
     /**
      * simpan user baru dan kembalikan ID jika berhasil
      *

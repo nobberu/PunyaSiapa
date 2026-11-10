@@ -2,41 +2,39 @@
 
 /** @var array $postingan */
 
-$title = 'Barang Ditemukan - PunyaSiapa';
-$base  = BASE_PATH . '/ditemukan';
+$title  = 'Barang Ditemukan - PunyaSiapa';
+$styles = ['components/postingan', 'pages/list'];
+$base   = BASE_PATH . '/ditemukan';
+$jumlah = count($postingan);
 ?>
 
 <main class="list">
-    <div class="list-header">
-        <h1>Barang Ditemukan</h1>
+    <header class="list-header">
+        <div>
+            <h1 class="page-title">Barang Ditemukan</h1>
+            <p class="list-header-count"><?= $jumlah ?> laporan</p>
+        </div>
 
         <?php if (Auth::check()): ?>
             <a class="btn" href="<?= $base ?>/create">Buat laporan</a>
+        <?php else: ?>
+            <a class="btn btn-tonal" href="<?= BASE_PATH ?>/login">Masuk untuk melapor</a>
         <?php endif; ?>
-    </div>
+    </header>
 
     <?php if (empty($postingan)): ?>
-        <p class="empty">Belum ada laporan.</p>
+        <div class="empty-state">
+            <p class="empty-state-title">Belum ada laporan</p>
+            <p class="empty-state-text">Barang temuan yang dilaporkan akan muncul di sini.</p>
+
+            <?php if (Auth::check()): ?>
+                <a class="btn" href="<?= $base ?>/create">Buat laporan</a>
+            <?php endif; ?>
+        </div>
     <?php else: ?>
-        <ul class="postingan-list">
+        <ul class="postingan-grid">
             <?php foreach ($postingan as $p): ?>
-                <li class="postingan-card">
-                    <a class="postingan-title"
-                       href="<?= $base ?>/<?= (int) $p['id_postingan'] ?>">
-                        <?= htmlspecialchars($p['nama_barang']) ?>
-                    </a>
-
-                    <p class="postingan-meta">
-                        <?= htmlspecialchars($p['nama_kategori']) ?>
-                        &middot; <?= htmlspecialchars($p['lokasi_kejadian']) ?>
-                        &middot; <?= htmlspecialchars($p['waktu_kejadian']) ?>
-                    </p>
-
-                    <p class="postingan-meta">
-                        Status: <?= htmlspecialchars($p['status_barang']) ?>
-                        &middot; oleh <?= htmlspecialchars($p['nama_pembuat']) ?>
-                    </p>
-                </li>
+                <?php require __DIR__ . '/../partials/postingan-card.php'; ?>
             <?php endforeach; ?>
         </ul>
     <?php endif; ?>

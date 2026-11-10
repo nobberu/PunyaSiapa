@@ -1,0 +1,143 @@
+.form-page {
+    width: 100%;
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+    background: var(--surface-container);
+    border-radius: var(--shape-panel);
+}
+
+.form-page h1 {
+    max-width: 14ch;
+    margin-bottom: 0.5rem;
+    font-size: clamp(2.25rem, 7vw, 3.5rem);
+    font-weight: 600;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+}
+
+.form-page-header p {
+    max-width: 44ch;
+    margin-top: 0.75rem;
+    color: var(--on-surface-variant);
+    font-size: 1rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+/* Foto barang — input gambar di bagian atas form */
+.photo-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.photo-field [hidden] {
+    display: none;
+}
+
+.photo-field-frame {
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 18rem;
+    background: var(--surface-container-low);
+    border-radius: var(--radius-xl);
+    cursor: pointer;
+    transition: background-color var(--dur-short) var(--ease);
+}
+
+.photo-field-frame:hover {
+    background: var(--surface-container);
+}
+
+.photo-field-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-field-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 1.5rem;
+    color: var(--on-surface-variant);
+    text-align: center;
+}
+
+.photo-field-placeholder svg {
+    width: 2rem;
+    height: 2rem;
+    margin-bottom: 0.25rem;
+    fill: currentColor;
+    opacity: 0.65;
+}
+
+.photo-field-title {
+    color: var(--on-surface);
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
+.photo-field-placeholder .field-hint {
+    margin: 0;
+}
+
+/* File input */
+.file-input {
+    width: 100%;
+    padding: 0.625rem;
+    background: var(--surface-container-low);
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    font-size: 0.8125rem;
+    transition: background-color var(--dur-short) var(--ease);
+}
+.file-input:hover {
+    background: var(--surface-container);
+}
+.file-input:focus-visible {
+    background: var(--surface-container-lowest);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.file-input::file-selector-button {
+    margin-right: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--dur-short) var(--ease);
+}
+.file-input::file-selector-button:hover {
+    background: var(--surface-container-high);
+}
+
+@media (max-width: 900px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 640px) {
+    .form-page {
+        padding: 2rem 1.25rem;
+        border-radius: var(--radius-xl) var(--radius-xl) var(--radius-lg)
+            var(--radius-lg);
+    }
+    .photo-field-frame {
+        aspect-ratio: 4 / 3;
+    }
+}

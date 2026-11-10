@@ -20,25 +20,25 @@ class KomentarController
 
         // 1. Validasi CSRF Token
         if (!Auth::verifyCsrf($r->post('_csrf'))) {
-            return $this->respond($r, false, 'Permintaan tidak valid. Muat ulang halaman.', 403);
+            $this->jsonResponse(false, 'Permintaan tidak valid. Muat ulang halaman.', 403);
         }
 
         $idPostingan = (int) $id;
         $postingan = (new Postingan())->find($idPostingan);
 
         if ($postingan === null || $postingan['status_tampil'] === 'dihapus') {
-            return $this->respond($r, false, 'Laporan tidak ditemukan.', 404);
+            $this->jsonResponse(false, 'Laporan tidak ditemukan.', 404);
         }
 
         $isiKomentar = trim((string) $r->post('isi_komentar'));
 
         // 2. Validasi input
         if ($isiKomentar === '') {
-            return $this->respond($r, false, 'Komentar tidak boleh kosong.', 422, $postingan);
+            $this->jsonResponse(false, 'Komentar tidak boleh kosong.', 422);
         }
 
         if (strlen($isiKomentar) > 1000) {
-            return $this->respond($r, false, 'Komentar maksimal 1000 karakter.', 422, $postingan);
+            $this->jsonResponse(false, 'Komentar maksimal 1000 karakter.', 422);
         }
 
         // 3. Simpan ke database
@@ -52,24 +52,13 @@ class KomentarController
         // Ambil data komentar yang baru disimpan (lengkap dengan nama pengirim)
         $dataKomentar = $komentarModel->find($idKomentarBaru);
 
-        // Jika request dari AJAX (JavaScript), kirim respon JSON agar browser bisa langsung nampilin
-        if ($r->isAjax()) {
-            header('Content-Type: application/json');
-            echo json_encode([
-                'success' => true,
-                'data'    => [
-                    'id_komentar'    => $idKomentarBaru,
-                    'nama_pengguna'  => $dataKomentar['nama_pengguna'] ?? 'Saya',
-                    'isi_komentar'   => htmlspecialchars($dataKomentar['isi_komentar'], ENT_QUOTES, 'UTF-8'),
-                    'waktu_komentar' => date('Y-m-d H:i:s'),
-                    'can_delete'     => true,
-                ],
-            ]);
-            exit;
-        }
-
-        // Fallback jika tanpa AJAX (redirect standar)
-        $this->redirectBack($postingan);
+        $this->jsonResponse(true, 'Komentar terkirim.', 200, [
+            'id_komentar'    => $idKomentarBaru,
+            'nama_pengguna'  => $dataKomentar['nama_pengguna'] ?? 'Saya',
+            'isi_komentar'   => $dataKomentar['isi_komentar'],
+            'waktu_komentar' => tanggal_id($dataKomentar['waktu_komentar'] ?? null, true),
+            'can_delete'     => true,
+        ]);
     }
 
     /**
@@ -82,7 +71,7 @@ class KomentarController
         $r = new Request();
 
         if (!Auth::verifyCsrf($r->post('_csrf'))) {
-            return $this->respond($r, false, 'Permintaan tidak valid.', 403);
+            $this->jsonResponse(false, 'Permintaan tidak valid.', 403);
         }
 
         $idKomentar = (int) $id;
@@ -90,59 +79,33 @@ class KomentarController
         $komentar = $komentarModel->find($idKomentar);
 
         if ($komentar === null || $komentar['status_tampil'] === 'dihapus') {
-            return $this->respond($r, false, 'Komentar tidak ditemukan.', 404);
+            $this->jsonResponse(false, 'Komentar tidak ditemukan.', 404);
         }
 
         // Hanya pembuat komentar itu sendiri ATAU admin yang boleh hapus
         if ((int) $komentar['id_pengguna'] !== (int) Auth::id() && !Auth::isAdmin()) {
-            return $this->respond($r, false, 'Anda tidak memiliki hak untuk menghapus komentar ini.', 403);
+            $this->jsonResponse(false, 'Anda tidak memiliki hak untuk menghapus komentar ini.', 403);
         }
 
         $komentarModel->softDelete($idKomentar);
 
-        if ($r->isAjax()) {
-            header('Content-Type: application/json');
-            echo json_encode([
-                'success'     => true,
-                'id_komentar' => $idKomentar,
-            ]);
-            exit;
-        }
-
-        $postingan = (new Postingan())->find((int) $komentar['id_postingan']);
-        $this->redirectBack($postingan);
+        $this->jsonResponse(true, 'Komentar dihapus.', 200, [
+            'id_komentar' => $idKomentar,
+        ]);
     }
 
     /**
-     * Helper untuk menangani respon (JSON jika AJAX, redirect jika form biasa).
+     * Kirim respon JSON dan exit.
      */
-    private function respond(Request $r, bool $success, string $message, int $statusCode = 200, ?array $postingan = null): void
+    private function jsonResponse(bool $success, string $message, int $statusCode = 200, ?array $data = null): void
     {
         http_response_code($statusCode);
-
-        if ($r->isAjax()) {
-            header('Content-Type: application/json');
-            echo json_encode([
-                'success' => $success,
-                'message' => $message,
-            ]);
-            exit;
+        header('Content-Type: application/json');
+        $payload = ['success' => $success, 'message' => $message];
+        if ($data !== null) {
+            $payload['data'] = $data;
         }
-
-        if (!$success) {
-            $_SESSION['error_komentar'] = $message;
-        }
-
-        $this->redirectBack($postingan);
-    }
-
-    private function redirectBack(?array $postingan): void
-    {
-        if ($postingan !== null) {
-            header('Location: ' . BASE_PATH . '/' . $postingan['jenis_postingan'] . '/' . (int) $postingan['id_postingan']);
-        } else {
-            header('Location: ' . BASE_PATH . '/');
-        }
+        echo json_encode($payload);
         exit;
     }
 }

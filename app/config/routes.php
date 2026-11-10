@@ -17,6 +17,9 @@ $router->get("/register", "AuthController@showRegister");
 $router->post("/register", "AuthController@register");
 $router->post("/logout", "AuthController@logout");
 
+// Profil
+$router->get("/profil", "ProfilController@index");
+
 // Kehilangan (CRUD)
 $router->get("/kehilangan", "KehilanganController@index");
 $router->get("/kehilangan/create", "KehilanganController@create");

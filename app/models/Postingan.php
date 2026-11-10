@@ -35,6 +35,22 @@ class Postingan
         return $stmt->fetchAll();
     }
 
+    public function allByUser(int $idPengguna): array
+    {
+        $sql = "SELECT p.*, k.nama_kategori, u.nama AS nama_pembuat
+                FROM postingan p
+                JOIN kategori k ON k.id_kategori = p.id_kategori
+                JOIN pengguna u ON u.id_pengguna = p.id_pengguna
+                WHERE p.id_pengguna = :id_pengguna
+                  AND p.status_tampil IS DISTINCT FROM 'dihapus'
+                ORDER BY p.created_at DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['id_pengguna' => $idPengguna]);
+
+        return $stmt->fetchAll();
+    }
+
     /** Ambil satu postingan berdasarkan id (dengan nama kategori & pembuat). */
     public function find(int $id)
     {
