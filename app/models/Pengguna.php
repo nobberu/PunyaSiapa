@@ -90,4 +90,47 @@ class Pengguna
 
         return $id === false ? null : (int) $id;
     }
+
+    /**
+     * Update data profil pengguna (nama, nomor_kontak, dan foto_profil).
+     *
+     * @param int   $idPengguna ID pengguna
+     * @param array $data       Array data ('nama', 'nomor_kontak', 'foto_profil')
+     * @return bool
+     */
+    public function updateProfil(int $idPengguna, array $data): bool
+    {
+        $nama        = trim($data['nama'] ?? '');
+        $nomorKontak = trim($data['nomor_kontak'] ?? ($data['no_hp'] ?? ''));
+        $fotoProfil  = $data['foto_profil'] ?? null;
+
+        if ($fotoProfil !== null) {
+            $sql = 'UPDATE pengguna 
+                    SET nama = :nama, 
+                        nomor_kontak = :nomor_kontak, 
+                        foto_profil = :foto_profil
+                    WHERE id_pengguna = :id';
+
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute([
+                'nama'         => $nama,
+                'nomor_kontak' => $nomorKontak,
+                'foto_profil'  => $fotoProfil,
+                'id'           => $idPengguna,
+            ]);
+        }
+
+        $sql = 'UPDATE pengguna 
+                SET nama = :nama, 
+                    nomor_kontak = :nomor_kontak
+                WHERE id_pengguna = :id';
+
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([
+            'nama'         => $nama,
+            'nomor_kontak' => $nomorKontak,
+            'id'           => $idPengguna,
+        ]);
+    }
 }
+

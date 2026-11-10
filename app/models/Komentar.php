@@ -20,7 +20,8 @@ class Komentar
      */
     public function forPostingan(int $idPostingan): array
     {
-        $sql = "SELECT k.*, u.nama AS nama_pengguna, u.username
+        // [DIUBAH] Menambahkan u.foto_profil pada klausa SELECT
+        $sql = "SELECT k.*, u.nama AS nama_pengguna, u.username, u.foto_profil
                 FROM komentar k
                 JOIN pengguna u ON u.id_pengguna = k.id_pengguna
                 WHERE k.id_postingan = :id_postingan
@@ -61,7 +62,8 @@ class Komentar
      */
     public function find(int $id): ?array
     {
-        $sql = "SELECT k.*, u.nama AS nama_pengguna, u.username
+        // [DIUBAH] Menambahkan u.foto_profil pada klausa SELECT
+        $sql = "SELECT k.*, u.nama AS nama_pengguna, u.username, u.foto_profil
                 FROM komentar k
                 JOIN pengguna u ON u.id_pengguna = k.id_pengguna
                 WHERE k.id_komentar = :id";
