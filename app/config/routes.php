@@ -19,6 +19,7 @@ $router->post("/logout", "AuthController@logout");
 
 // Profil
 $router->get("/profil", "ProfilController@index");
+$router->post("/profil/update", "ProfilController@update");
 
 // Kehilangan (CRUD)
 $router->get("/kehilangan", "KehilanganController@index");
