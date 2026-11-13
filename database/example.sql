@@ -1,4 +1,11 @@
 BEGIN;
+
+-- ------------------------------------------------------------------
+-- pgcrypto: dipakai crypt()/gen_salt() untuk hash password bcrypt
+-- di procedure tambah_pengguna(). Butuh role superuser.
+-- ------------------------------------------------------------------
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- ------------------------------------------------------------------
 -- pengguna
 -- ------------------------------------------------------------------
@@ -13,6 +20,115 @@ CREATE TABLE pengguna (
     CONSTRAINT pengguna_pkey PRIMARY KEY (id_pengguna),
     CONSTRAINT pengguna_username_key UNIQUE (username)
 );
+
+-- ------------------------------------------------------------------
+-- Validasi insert pengguna
+--
+-- 1. Trigger  : menjaga SEMUA insert (termasuk INSERT manual), dan
+--               menolak password yang belum berbentuk hash bcrypt.
+-- 2. Procedure: satu-satunya cara resmi menambah user manual; menerima
+--               password plaintext, memvalidasi, lalu meng-hash-nya.
+--
+-- Contoh:
+--   CALL tambah_pengguna('Budi Santoso', 'budi2', 'rahasia123',
+--                        'user', '081234567890');
+-- ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION validasi_pengguna() RETURNS TRIGGER
+LANGUAGE plpgsql AS $$
+BEGIN
+    NEW.nama         := btrim(coalesce(NEW.nama, ''));
+    NEW.username     := btrim(coalesce(NEW.username, ''));
+    NEW.nomor_kontak := btrim(coalesce(NEW.nomor_kontak, ''));
+    NEW.foto_profil  := nullif(btrim(coalesce(NEW.foto_profil, '')), '');
+
+    IF NEW.nama = '' THEN
+        RAISE EXCEPTION 'Nama wajib diisi.' USING ERRCODE = '22023';
+    END IF;
+
+    IF NEW.username !~ '^[A-Za-z0-9_.]{3,50}$' THEN
+        RAISE EXCEPTION 'Username 3-50 karakter, hanya huruf, angka, titik, underscore.'
+            USING ERRCODE = '22023';
+    END IF;
+
+    IF NEW.role IS NULL OR NEW.role NOT IN ('user', 'admin') THEN
+        RAISE EXCEPTION 'Role harus "user" atau "admin".' USING ERRCODE = '22023';
+    END IF;
+
+    IF NEW.nomor_kontak !~ '^\+?[0-9]{8,20}$' THEN
+        RAISE EXCEPTION 'Nomor kontak tidak valid.' USING ERRCODE = '22023';
+    END IF;
+
+    IF NEW.password IS NULL
+       OR NEW.password !~ '^\$2[aby]\$[0-9]{2}\$[./A-Za-z0-9]{53}$' THEN
+        RAISE EXCEPTION 'Password harus hash bcrypt. Pakai: CALL tambah_pengguna(...).'
+            USING ERRCODE = '22023';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_pengguna_validasi
+    BEFORE INSERT ON pengguna
+    FOR EACH ROW EXECUTE FUNCTION validasi_pengguna();
+
+CREATE OR REPLACE PROCEDURE tambah_pengguna(
+    IN  p_nama         VARCHAR,
+    IN  p_username     VARCHAR,
+    IN  p_password     TEXT,
+    IN  p_role         VARCHAR DEFAULT 'user',
+    IN  p_nomor_kontak VARCHAR DEFAULT NULL,
+    IN  p_foto_profil  VARCHAR DEFAULT NULL,
+    OUT o_id_pengguna  BIGINT
+)
+LANGUAGE plpgsql AS $$
+DECLARE
+    v_nama     VARCHAR := btrim(coalesce(p_nama, ''));
+    v_username VARCHAR := btrim(coalesce(p_username, ''));
+    v_kontak   VARCHAR := btrim(coalesce(p_nomor_kontak, ''));
+    v_foto     VARCHAR := nullif(btrim(coalesce(p_foto_profil, '')), '');
+BEGIN
+    IF v_nama = '' THEN
+        RAISE EXCEPTION 'Nama wajib diisi.' USING ERRCODE = '22023';
+    END IF;
+    IF char_length(v_nama) > 100 THEN
+        RAISE EXCEPTION 'Nama maksimal 100 karakter.' USING ERRCODE = '22023';
+    END IF;
+
+    IF v_username !~ '^[A-Za-z0-9_.]{3,50}$' THEN
+        RAISE EXCEPTION 'Username 3-50 karakter, hanya huruf, angka, titik, underscore.'
+            USING ERRCODE = '22023';
+    END IF;
+    IF EXISTS (SELECT 1 FROM pengguna WHERE username = v_username) THEN
+        RAISE EXCEPTION 'Username "%" sudah dipakai.', v_username USING ERRCODE = '23505';
+    END IF;
+
+    IF p_password IS NULL OR char_length(p_password) < 8 THEN
+        RAISE EXCEPTION 'Password minimal 8 karakter.' USING ERRCODE = '22023';
+    END IF;
+    IF octet_length(p_password) > 72 THEN
+        RAISE EXCEPTION 'Password maksimal 72 byte (batas bcrypt).' USING ERRCODE = '22023';
+    END IF;
+
+    IF coalesce(p_role, 'user') NOT IN ('user', 'admin') THEN
+        RAISE EXCEPTION 'Role harus "user" atau "admin".' USING ERRCODE = '22023';
+    END IF;
+
+    IF v_kontak !~ '^\+?[0-9]{8,20}$' THEN
+        RAISE EXCEPTION 'Nomor kontak tidak valid.' USING ERRCODE = '22023';
+    END IF;
+
+    IF v_foto IS NOT NULL AND char_length(v_foto) > 255 THEN
+        RAISE EXCEPTION 'Path foto maksimal 255 karakter.' USING ERRCODE = '22023';
+    END IF;
+
+    INSERT INTO pengguna (nama, username, password, role, nomor_kontak, foto_profil)
+    VALUES (v_nama, v_username,
+            crypt(p_password, gen_salt('bf', 10)),   -- bcrypt cost 10
+            coalesce(p_role, 'user'), v_kontak, v_foto)
+    RETURNING id_pengguna INTO o_id_pengguna;
+END;
+$$;
 
 -- ------------------------------------------------------------------
 -- kategori
@@ -140,5 +256,30 @@ ALTER TABLE report_komentar
 ALTER TABLE report_komentar
     ADD CONSTRAINT fk_report_komentar_id_pengguna
     FOREIGN KEY (id_pengguna) REFERENCES pengguna (id_pengguna) ON DELETE RESTRICT;
+
+-- ------------------------------------------------------------------
+-- View baca: postingan + nama kategori + nama pembuat
+-- Dipakai oleh app/models/Postingan.php (all, allByUser, find).
+-- ------------------------------------------------------------------
+CREATE OR REPLACE VIEW v_postingan AS
+SELECT
+    p.id_postingan,
+    p.id_pengguna,
+    p.id_kategori,
+    p.nama_barang,
+    p.deskripsi,
+    p.foto,
+    p.lokasi_kejadian,
+    p.waktu_kejadian,
+    p.jenis_postingan,
+    p.status_barang,
+    p.created_at,
+    p.status_tampil,
+    k.nama_kategori,
+    u.nama     AS nama_pembuat,
+    u.username AS username_pembuat
+FROM postingan p
+JOIN kategori k ON k.id_kategori = p.id_kategori
+JOIN pengguna u ON u.id_pengguna = p.id_pengguna;
 
 COMMIT;

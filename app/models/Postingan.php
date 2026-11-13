@@ -5,6 +5,9 @@ require_once __DIR__ . '/../core/Database.php';
 /**
  * Model untuk tabel postingan.
  *
+ * Query baca memakai view v_postingan (join postingan + kategori + pengguna),
+ * yang didefinisikan di database/example.sql dan database/views.sql.
+ *
  * status_tampil bertipe enum stts_tampil ('tampil' | 'dihapus') dan boleh NULL,
  * jadi penyaringan memakai "IS DISTINCT FROM 'dihapus'" agar baris lama yang
  * masih NULL tetap ikut tampil.
@@ -21,13 +24,10 @@ class Postingan
     /** Daftar postingan satu jenis (kehilangan/ditemukan), tanpa yang dihapus. */
     public function all(string $jenis): array
     {
-        $sql = "SELECT p.*, k.nama_kategori, u.nama AS nama_pembuat
-                FROM postingan p
-                JOIN kategori k ON k.id_kategori = p.id_kategori
-                JOIN pengguna u ON u.id_pengguna = p.id_pengguna
-                WHERE p.jenis_postingan = :jenis
-                  AND p.status_tampil IS DISTINCT FROM 'dihapus'
-                ORDER BY p.created_at DESC";
+        $sql = "SELECT * FROM v_postingan
+                WHERE jenis_postingan = :jenis
+                  AND status_tampil IS DISTINCT FROM 'dihapus'
+                ORDER BY created_at DESC";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['jenis' => $jenis]);
@@ -37,13 +37,10 @@ class Postingan
 
     public function allByUser(int $idPengguna): array
     {
-        $sql = "SELECT p.*, k.nama_kategori, u.nama AS nama_pembuat
-                FROM postingan p
-                JOIN kategori k ON k.id_kategori = p.id_kategori
-                JOIN pengguna u ON u.id_pengguna = p.id_pengguna
-                WHERE p.id_pengguna = :id_pengguna
-                  AND p.status_tampil IS DISTINCT FROM 'dihapus'
-                ORDER BY p.created_at DESC";
+        $sql = "SELECT * FROM v_postingan
+                WHERE id_pengguna = :id_pengguna
+                  AND status_tampil IS DISTINCT FROM 'dihapus'
+                ORDER BY created_at DESC";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id_pengguna' => $idPengguna]);
@@ -54,13 +51,9 @@ class Postingan
     /** Ambil satu postingan berdasarkan id (dengan nama kategori & pembuat). */
     public function find(int $id)
     {
-        $sql = "SELECT p.*, k.nama_kategori, u.nama AS nama_pembuat
-                FROM postingan p
-                JOIN kategori k ON k.id_kategori = p.id_kategori
-                JOIN pengguna u ON u.id_pengguna = p.id_pengguna
-                WHERE p.id_postingan = :id";
-
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM v_postingan WHERE id_postingan = :id"
+        );
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
 
