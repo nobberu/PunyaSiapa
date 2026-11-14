@@ -129,4 +129,45 @@ class Postingan
 
         return $stmt->execute(['id' => $id]);
     }
+    /**
+     * Cari postingan menggunakan Full-Text Search.
+     *
+     * Memakai CTE untuk memisahkan filter + ranking dari SELECT akhir.
+     * websearch_to_tsquery mendukung frasa, AND, OR, minus (-).
+     *
+     * @param  string $q     Kata kunci pencarian
+     * @param  string $jenis Filter: 'kehilangan', 'ditemukan', atau '' (semua)
+     * @return array
+     */
+    public function search(string $q, string $jenis = ''): array
+    {
+        $q = trim($q);
+
+        if ($q === '') {
+            return [];
+        }
+
+        $sql = "
+            WITH hasil_fts AS (
+                SELECT
+                    v.*,
+                    ts_rank(v.search_vector, query) AS rank
+                FROM v_postingan v,
+                     websearch_to_tsquery('simple', :q) AS query
+                WHERE v.search_vector @@ query
+                  AND v.status_tampil IS DISTINCT FROM 'dihapus'
+                  AND (:jenis = '' OR v.jenis_postingan = :jenis)
+            )
+            SELECT * FROM hasil_fts
+            ORDER BY rank DESC, created_at DESC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'q'     => $q,
+            'jenis' => $jenis,
+        ]);
+
+        return $stmt->fetchAll();
+    }
 }

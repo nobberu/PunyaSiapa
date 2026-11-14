@@ -20,6 +20,9 @@ $router->post("/logout", "AuthController@logout");
 // Profil
 $router->get("/profil", "ProfilController@index");
 $router->post("/profil/update", "ProfilController@update");
+// Pencarian FTS
+$router->get("/search", "HomeController@search");
+
 
 // Kehilangan (CRUD)
 $router->get("/kehilangan", "KehilanganController@index");

@@ -30,6 +30,7 @@ $ditemukanActive  = isActive('/ditemukan', $currentUri);
 $profilActive     = isActive('/profil', $currentUri);
 $loginActive      = isActive('/login', $currentUri);
 $registerActive   = isActive('/register', $currentUri);
+$searchActive     = isActive('/search', $currentUri);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -100,6 +101,14 @@ $registerActive   = isActive('/register', $currentUri);
                 <path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.35,44L178.57,92.29l-80.35-44Zm0,88L47.65,76,81.56,57.43l80.35,44Zm88,55.85h0l-80,43.79V133.83l32-17.51V142a8,8,0,0,0,16,0V107.56l32-17.51v85.76Z"></path>
             </svg>
             <span>Ditemukan</span>
+        </a>
+        <a class="nav-item <?= $searchActive ? 'is-active' : '' ?>"
+            href="<?= BASE_PATH ?>/search"
+            <?= $searchActive ? 'aria-current="page"' : '' ?>>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" aria-hidden="true">
+                <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+            </svg>
+            <span>Cari</span>
         </a>
 
         <?php if ($user !== null): ?>

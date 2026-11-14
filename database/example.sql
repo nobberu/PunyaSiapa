@@ -162,6 +162,22 @@ CREATE TABLE postingan (
 );
 
 -- ------------------------------------------------------------------
+-- FTS: Full-Text Search postingan
+-- ------------------------------------------------------------------
+ALTER TABLE postingan
+    ADD COLUMN IF NOT EXISTS search_vector TSVECTOR
+        GENERATED ALWAYS AS (
+            to_tsvector('simple',
+                coalesce(nama_barang, '') || ' ' ||
+                coalesce(deskripsi, '')   || ' ' ||
+                coalesce(lokasi_kejadian, '')
+            )
+        ) STORED;
+
+CREATE INDEX IF NOT EXISTS idx_postingan_fts
+    ON postingan USING GIN (search_vector);
+
+-- ------------------------------------------------------------------
 -- komentar
 -- ------------------------------------------------------------------
 CREATE TABLE komentar (
@@ -275,6 +291,7 @@ SELECT
     p.status_barang,
     p.created_at,
     p.status_tampil,
+    p.search_vector,
     k.nama_kategori,
     u.nama     AS nama_pembuat,
     u.username AS username_pembuat
