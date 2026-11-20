@@ -73,13 +73,14 @@ CREATE TRIGGER trg_pengguna_validasi
     FOR EACH ROW EXECUTE FUNCTION validasi_pengguna();
 
 CREATE OR REPLACE PROCEDURE tambah_pengguna(
+    OUT o_id_pengguna  BIGINT,
     IN  p_nama         VARCHAR,
     IN  p_username     VARCHAR,
     IN  p_password     TEXT,
     IN  p_role         VARCHAR DEFAULT 'user',
     IN  p_nomor_kontak VARCHAR DEFAULT NULL,
-    IN  p_foto_profil  VARCHAR DEFAULT NULL,
-    OUT o_id_pengguna  BIGINT
+    IN  p_foto_profil  VARCHAR DEFAULT NULL
+    
 )
 LANGUAGE plpgsql AS $$
 DECLARE
