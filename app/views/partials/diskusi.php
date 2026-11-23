@@ -19,7 +19,10 @@ $jumlahKomentar = count($komentar);
                 <?php
                 $canDelete = Auth::check()
                     && ((int) $k['id_pengguna'] === (int) Auth::id() || Auth::isAdmin());
+                $canReport = Auth::check()
+                    && ((int) $k['id_pengguna'] !== (int) Auth::id());
                 ?>
+
                 <div class="komentar-item" id="komentar-<?= (int) $k['id_komentar'] ?>">
                     <span class="komentar-avatar" aria-hidden="true">
                         <?= htmlspecialchars(inisial($k['nama_pengguna'])) ?>
@@ -45,6 +48,15 @@ $jumlahKomentar = count($komentar);
                             <button class="btn-text" type="submit">Hapus</button>
                         </form>
                     <?php endif; ?>
+                    <?php if ($canReport): ?>
+                        <button type="button"
+                            class="btn-text"
+                            data-report-trigger
+                            data-report-url="<?= BASE_PATH ?>/komentar/<?= (int) $k['id_komentar'] ?>/report"
+                            data-report-label="Komentar oleh <?= htmlspecialchars($k['nama_pengguna'], ENT_QUOTES, 'UTF-8') ?>">
+                            Laporkan
+                        </button>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
@@ -65,8 +77,8 @@ $jumlahKomentar = count($komentar);
                 </label>
                 <textarea id="input-komentar" name="isi_komentar" rows="3" required maxlength="1000"
                     placeholder="<?= $canComment
-                        ? 'Tulis info atau pertanyaan untuk pelapor...'
-                        : 'Klaim barang ini untuk mulai berdiskusi...' ?>"
+                                        ? 'Tulis info atau pertanyaan untuk pelapor...'
+                                        : 'Klaim barang ini untuk mulai berdiskusi...' ?>"
                     data-counter="#komentar-count"
                     <?= $canComment ? '' : 'disabled' ?>></textarea>
                 <div class="composer-footer">

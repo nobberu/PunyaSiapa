@@ -332,7 +332,7 @@ class DitemukanController
         if (
             $postingan === null ||
             $postingan['jenis_postingan'] !== self::JENIS ||
-            $postingan['status_tampil'] === 'dihapus'
+            $postingan['status_tampil'] !== 'tampil'
         ) {
             http_response_code(404);
             echo '404 Not Found';

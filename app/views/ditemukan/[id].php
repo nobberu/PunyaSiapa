@@ -80,7 +80,20 @@ $statusClass = $status === 'selesai' ? 'badge badge-selesai' : 'badge badge-akti
         </div>
     <?php endif; ?>
 
+    <?php if (Auth::check() && (int) $postingan['id_pengguna'] !== (int) Auth::id()): ?>
+        <div class="detail-actions">
+            <button class="btn btn-outlined btn-sm"
+                type="button"
+                data-report-trigger
+                data-report-url="<?= BASE_PATH ?>/postingan/<?= (int) $id ?>/report"
+                data-report-label="Postingan: <?= htmlspecialchars($postingan['nama_barang'], ENT_QUOTES, 'UTF-8') ?>">
+                Laporkan postingan
+            </button>
+        </div>
+    <?php endif; ?>
+
     <?php require __DIR__ . '/../partials/diskusi.php'; ?>
+    <?php require __DIR__ . '/../partials/report-modal.php'; ?>
 </main>
 
 <script src="<?= BASE_PATH ?>/js/detail.js" defer></script>

@@ -49,3 +49,17 @@ $router->post("/komentar/{id:\d+}/delete", "KomentarController@destroy");
 
 // Klaim
 $router->post("/ditemukan/{id:\d+}/claim", "ClaimController@store");
+
+// Report Pengguna (WBS 3.8.1)
+$router->post("/postingan/{id:\d+}/report", "ReportController@storePostingan");
+$router->post("/komentar/{id:\d+}/report", "ReportController@storeKomentar");
+$router->get("/laporan-saya", "ReportController@myReports");
+
+
+// Admin Moderation (WBS 3.9.1)
+$router->get("/admin/moderasi", "AdminModerationController@index");
+$router->get("/admin/moderasi/{jenis:postingan|komentar}/{id:\d+}", "AdminModerationController@show");
+$router->post("/admin/moderasi/{jenis:postingan|komentar}/{id:\d+}/review", "AdminModerationController@markReviewing");
+$router->post("/admin/moderasi/{jenis:postingan|komentar}/{id:\d+}/reject", "AdminModerationController@reject");
+$router->post("/admin/moderasi/{jenis:postingan|komentar}/{id:\d+}/hide", "AdminModerationController@hide");
+$router->post("/admin/moderasi/{jenis:postingan|komentar}/{id:\d+}/restore", "AdminModerationController@restore");

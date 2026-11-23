@@ -7,7 +7,7 @@
     }
 
     var ui = window.PunyaUI || {
-        toast: function () {},
+        toast: function () { },
         confirm: function (message) {
             return Promise.resolve(window.confirm(message));
         }
@@ -252,6 +252,99 @@
             });
         });
     }
+    // --- Handler Modal Report (Postingan & Komentar) ---
+    var reportDialog = document.getElementById('report-dialog');
+    var reportForm = document.getElementById('form-report');
+    var reportTargetLabel = document.getElementById('report-dialog-target');
+    var reportKategori = document.getElementById('report-kategori');
+    var reportAlasan = document.getElementById('report-alasan');
+    var reportAlasanReq = document.getElementById('report-alasan-req');
+    var reportCancelBtn = document.getElementById('btn-batal-report');
+    var reportSubmitBtn = document.getElementById('btn-kirim-report');
 
+    function syncAlasanRequirement() {
+        if (!reportKategori || !reportAlasan) {
+            return;
+        }
+        var isOther = reportKategori.value === 'other';
+        reportAlasan.required = isOther;
+        if (reportAlasanReq) {
+            reportAlasanReq.textContent = isOther ? '(Wajib diisi)' : '(Opsional)';
+        }
+    }
+
+    if (reportDialog && reportForm) {
+        page.addEventListener('click', function (event) {
+            var trigger = event.target.closest('[data-report-trigger]');
+            if (!trigger) {
+                return;
+            }
+
+            reportForm.reset();
+            reportForm.action = trigger.dataset.reportUrl || '';
+            if (reportTargetLabel) {
+                reportTargetLabel.textContent = trigger.dataset.reportLabel || 'Laporkan konten ini';
+            }
+            syncAlasanRequirement();
+
+            if (typeof reportDialog.showModal === 'function') {
+                reportDialog.showModal();
+            } else {
+                reportDialog.setAttribute('open', 'open');
+            }
+        });
+
+        if (reportKategori) {
+            reportKategori.addEventListener('change', syncAlasanRequirement);
+        }
+
+        if (reportCancelBtn) {
+            reportCancelBtn.addEventListener('click', function () {
+                if (typeof reportDialog.close === 'function') {
+                    reportDialog.close();
+                } else {
+                    reportDialog.removeAttribute('open');
+                }
+            });
+        }
+
+        reportForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            if (!reportForm.action) {
+                return;
+            }
+
+            if (reportSubmitBtn) {
+                reportSubmitBtn.disabled = true;
+                reportSubmitBtn.textContent = 'Mengirim...';
+            }
+
+            requestJson(reportForm.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(reportForm)
+            }).then(function (result) {
+                if (!result.ok || !result.data.success) {
+                    throw new Error(result.data.message || 'Gagal mengirim laporan.');
+                }
+
+                if (typeof reportDialog.close === 'function') {
+                    reportDialog.close();
+                } else {
+                    reportDialog.removeAttribute('open');
+                }
+
+                ui.toast(result.data.message || 'Laporan berhasil dikirim.', 'success');
+            }).catch(function (error) {
+                ui.toast(error.message || 'Terjadi kesalahan jaringan.', 'error');
+            }).finally(function () {
+                if (reportSubmitBtn) {
+                    reportSubmitBtn.disabled = false;
+                    reportSubmitBtn.textContent = 'Kirim Laporan';
+                }
+            });
+        });
+    }
     updateCount();
 })();

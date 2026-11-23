@@ -28,8 +28,10 @@ class Kernel
         require_once __DIR__ . '/../../app/controllers/KehilanganController.php';
         require_once __DIR__ . '/../../app/controllers/DitemukanController.php';
         require_once __DIR__ . '/../../app/controllers/KomentarController.php';
-                require_once __DIR__ . '/../../app/controllers/ClaimController.php';
+        require_once __DIR__ . '/../../app/controllers/ClaimController.php';
         require_once __DIR__ . '/../../app/controllers/ProfilController.php';
+        require_once __DIR__ . '/../../app/controllers/ReportController.php';
+        require_once __DIR__ . '/../../app/controllers/AdminModerationController.php';
 
         \Auth::start();
 

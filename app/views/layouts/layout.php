@@ -60,6 +60,11 @@ $searchActive     = isActive('/search', $currentUri);
 
             <div class="app-bar-actions">
                 <?php if ($user !== null): ?>
+                    <?php if (Auth::isAdmin()): ?>
+                        <a class="app-bar-greeting" href="<?= BASE_PATH ?>/admin/moderasi" title="Panel Moderasi Admin">
+                            Moderasi
+                        </a>
+                    <?php endif; ?>
                     <a class="app-bar-greeting" href="<?= BASE_PATH ?>/profil" title="Buka profil">
                         <?= htmlspecialchars($user["nama"]) ?>
                     </a>

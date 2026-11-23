@@ -25,7 +25,7 @@ class Komentar
                 FROM komentar k
                 JOIN pengguna u ON u.id_pengguna = k.id_pengguna
                 WHERE k.id_postingan = :id_postingan
-                  AND k.status_tampil IS DISTINCT FROM 'dihapus'
+                  AND k.status_tampil = 'tampil'
                 ORDER BY k.waktu_komentar ASC";
 
         $stmt = $this->pdo->prepare($sql);
@@ -87,4 +87,26 @@ class Komentar
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute(['id' => $id]);
     }
+    
+  /** Ubah visibilitas moderasi ('tampil' <-> 'disembunyikan'), tidak menyentuh 'dihapus'. */
+  public function setVisibility(int $id, string $status): bool
+  {
+      if (!in_array($status, ['tampil', 'disembunyikan'], true)) {
+          throw new InvalidArgumentException('Status visibilitas tidak valid.');
+      }
+
+      $stmt = $this->pdo->prepare(
+          "UPDATE komentar
+           SET status_tampil = :status
+           WHERE id_komentar = :id
+             AND status_tampil <> 'dihapus'"
+      );
+
+      $stmt->execute([
+          'status' => $status,
+          'id'     => $id,
+      ]);
+
+      return $stmt->rowCount() > 0;
+  }
 }

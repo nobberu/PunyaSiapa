@@ -42,10 +42,10 @@ class Pengguna
             "SELECT
                 (SELECT COUNT(*) FROM postingan
                     WHERE id_pengguna = :laporan
-                      AND status_tampil IS DISTINCT FROM 'dihapus') AS laporan,
+                      AND status_tampil = 'tampil') AS laporan,
                 (SELECT COUNT(*) FROM komentar
                     WHERE id_pengguna = :komentar
-                      AND status_tampil IS DISTINCT FROM 'dihapus') AS komentar,
+                      AND status_tampil = 'tampil') AS komentar,
                 (SELECT COUNT(*) FROM claim
                     WHERE id_pengguna = :klaim) AS klaim"
         );

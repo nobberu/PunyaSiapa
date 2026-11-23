@@ -144,7 +144,7 @@ CREATE TABLE kategori (
 -- ------------------------------------------------------------------
 -- postingan
 -- ------------------------------------------------------------------
-create type stts_tampil as enum ('tampil', 'dihapus');
+CREATE TYPE stts_tampil AS ENUM ('tampil', 'disembunyikan', 'dihapus');
 CREATE TABLE postingan (
     id_postingan         BIGSERIAL    NOT NULL,
     id_pengguna          BIGINT       NOT NULL,
@@ -197,11 +197,24 @@ CREATE TABLE report_postingan (
     id_report_postingan  BIGSERIAL    NOT NULL,
     id_postingan         BIGINT       NOT NULL,
     id_pengguna          BIGINT       NOT NULL,
-    alasan_report        TEXT         NOT NULL,
-    waktu_report         TIMESTAMP    NOT NULL,
-    status_report        VARCHAR(255) NOT NULL,
-    CONSTRAINT report_postingan_pkey PRIMARY KEY (id_report_postingan)
+    kategori_report      VARCHAR(30)  NOT NULL DEFAULT 'other',
+    alasan_report        TEXT         NOT NULL DEFAULT '',
+    waktu_report         TIMESTAMP    NOT NULL DEFAULT NOW(),
+    status_report        VARCHAR(30)  NOT NULL DEFAULT 'pending',
+    reviewed_by          BIGINT,
+    reviewed_at          TIMESTAMP,
+    catatan_admin        TEXT,
+    updated_at           TIMESTAMP    NOT NULL DEFAULT NOW(),
+    CONSTRAINT report_postingan_pkey PRIMARY KEY (id_report_postingan),
+    CONSTRAINT chk_report_postingan_kategori
+        CHECK (kategori_report IN ('spam', 'fraud', 'harassment', 'misleading', 'privacy', 'inappropriate', 'other')),
+    CONSTRAINT chk_report_postingan_status
+        CHECK (status_report IN ('pending', 'reviewing', 'resolved', 'rejected'))
 );
+
+CREATE UNIQUE INDEX uq_report_postingan_aktif
+    ON report_postingan (id_pengguna, id_postingan)
+    WHERE status_report IN ('pending', 'reviewing');
 
 -- ------------------------------------------------------------------
 -- claim
@@ -224,10 +237,41 @@ CREATE TABLE report_komentar (
     id_report_komentar   BIGSERIAL    NOT NULL,
     id_komentar          BIGINT       NOT NULL,
     id_pengguna          BIGINT       NOT NULL,
-    alasan_report        TEXT         NOT NULL,
-    waktu_report         TIMESTAMP    NOT NULL,
-    status_report        VARCHAR(30)  NOT NULL,
-    CONSTRAINT report_komentar_pkey PRIMARY KEY (id_report_komentar)
+    kategori_report      VARCHAR(30)  NOT NULL DEFAULT 'other',
+    alasan_report        TEXT         NOT NULL DEFAULT '',
+    waktu_report         TIMESTAMP    NOT NULL DEFAULT NOW(),
+    status_report        VARCHAR(30)  NOT NULL DEFAULT 'pending',
+    reviewed_by          BIGINT,
+    reviewed_at          TIMESTAMP,
+    catatan_admin        TEXT,
+    updated_at           TIMESTAMP    NOT NULL DEFAULT NOW(),
+    CONSTRAINT report_komentar_pkey PRIMARY KEY (id_report_komentar),
+    CONSTRAINT chk_report_komentar_kategori
+        CHECK (kategori_report IN ('spam', 'fraud', 'harassment', 'misleading', 'privacy', 'inappropriate', 'other')),
+    CONSTRAINT chk_report_komentar_status
+        CHECK (status_report IN ('pending', 'reviewing', 'resolved', 'rejected'))
+);
+
+CREATE UNIQUE INDEX uq_report_komentar_aktif
+    ON report_komentar (id_pengguna, id_komentar)
+    WHERE status_report IN ('pending', 'reviewing');
+
+-- ------------------------------------------------------------------
+-- log_moderasi (Audit Trail tindakan Admin)
+-- ------------------------------------------------------------------
+CREATE TABLE log_moderasi (
+    id_log               BIGSERIAL    NOT NULL,
+    id_admin             BIGINT       NOT NULL,
+    jenis_target         VARCHAR(20)  NOT NULL,
+    id_target            BIGINT       NOT NULL,
+    jenis_aksi           VARCHAR(30)  NOT NULL,
+    alasan               TEXT,
+    status_sebelum       VARCHAR(30),
+    status_sesudah       VARCHAR(30),
+    waktu_aksi           TIMESTAMP    NOT NULL DEFAULT NOW(),
+    CONSTRAINT log_moderasi_pkey PRIMARY KEY (id_log),
+    CONSTRAINT chk_log_moderasi_target CHECK (jenis_target IN ('postingan', 'komentar')),
+    CONSTRAINT chk_log_moderasi_aksi   CHECK (jenis_aksi IN ('review', 'reject', 'hide', 'restore'))
 );
 
 -- ------------------------------------------------------------------
@@ -273,6 +317,17 @@ ALTER TABLE report_komentar
     ADD CONSTRAINT fk_report_komentar_id_pengguna
     FOREIGN KEY (id_pengguna) REFERENCES pengguna (id_pengguna) ON DELETE RESTRICT;
 
+ALTER TABLE report_postingan
+    ADD CONSTRAINT fk_report_postingan_reviewed_by
+    FOREIGN KEY (reviewed_by) REFERENCES pengguna (id_pengguna) ON DELETE RESTRICT;
+
+ALTER TABLE report_komentar
+    ADD CONSTRAINT fk_report_komentar_reviewed_by
+    FOREIGN KEY (reviewed_by) REFERENCES pengguna (id_pengguna) ON DELETE RESTRICT;
+
+ALTER TABLE log_moderasi
+    ADD CONSTRAINT fk_log_moderasi_id_admin
+    FOREIGN KEY (id_admin) REFERENCES pengguna (id_pengguna) ON DELETE RESTRICT;
 -- ------------------------------------------------------------------
 -- View baca: postingan + nama kategori + nama pembuat
 -- Dipakai oleh app/models/Postingan.php (all, allByUser, find).
@@ -298,5 +353,67 @@ SELECT
 FROM postingan p
 JOIN kategori k ON k.id_kategori = p.id_kategori
 JOIN pengguna u ON u.id_pengguna = p.id_pengguna;
+
+-- ------------------------------------------------------------------
+-- View baca: gabungan report_postingan + report_komentar untuk Admin
+-- dan halaman Laporan Saya (dipakai oleh app/models/Report.php).
+-- ------------------------------------------------------------------
+CREATE OR REPLACE VIEW v_laporan_moderasi AS
+SELECT
+    'postingan'::VARCHAR(20)        AS jenis_target,
+    r.id_report_postingan           AS id_report,
+    r.id_postingan                  AS id_target,
+    p.id_postingan                  AS id_postingan_induk,
+    p.jenis_postingan               AS jenis_postingan,
+    p.nama_barang::TEXT             AS ringkasan_target,
+    p.status_tampil                 AS status_tampil_target,
+    p.id_pengguna                   AS id_pemilik_target,
+    pemilik.nama                    AS nama_pemilik_target,
+    r.id_pengguna                   AS id_pelapor,
+    pelapor.nama                    AS nama_pelapor,
+    r.kategori_report,
+    r.alasan_report,
+    r.status_report::VARCHAR(30)    AS status_report,
+    r.waktu_report,
+    r.reviewed_by,
+    adm.nama                        AS nama_admin,
+    r.reviewed_at,
+    r.catatan_admin,
+    r.updated_at
+FROM report_postingan r
+JOIN postingan p        ON p.id_postingan = r.id_postingan
+JOIN pengguna pemilik   ON pemilik.id_pengguna = p.id_pengguna
+JOIN pengguna pelapor   ON pelapor.id_pengguna = r.id_pengguna
+LEFT JOIN pengguna adm  ON adm.id_pengguna = r.reviewed_by
+
+UNION ALL
+
+SELECT
+    'komentar'::VARCHAR(20)         AS jenis_target,
+    r.id_report_komentar            AS id_report,
+    r.id_komentar                   AS id_target,
+    k.id_postingan                  AS id_postingan_induk,
+    p.jenis_postingan               AS jenis_postingan,
+    LEFT(k.isi_komentar, 150)::TEXT AS ringkasan_target,
+    k.status_tampil                 AS status_tampil_target,
+    k.id_pengguna                   AS id_pemilik_target,
+    pemilik.nama                    AS nama_pemilik_target,
+    r.id_pengguna                   AS id_pelapor,
+    pelapor.nama                    AS nama_pelapor,
+    r.kategori_report,
+    r.alasan_report,
+    r.status_report::VARCHAR(30)    AS status_report,
+    r.waktu_report,
+    r.reviewed_by,
+    adm.nama                        AS nama_admin,
+    r.reviewed_at,
+    r.catatan_admin,
+    r.updated_at
+FROM report_komentar r
+JOIN komentar k         ON k.id_komentar = r.id_komentar
+JOIN postingan p        ON p.id_postingan = k.id_postingan
+JOIN pengguna pemilik   ON pemilik.id_pengguna = k.id_pengguna
+JOIN pengguna pelapor   ON pelapor.id_pengguna = r.id_pengguna
+LEFT JOIN pengguna adm  ON adm.id_pengguna = r.reviewed_by;
 
 COMMIT;

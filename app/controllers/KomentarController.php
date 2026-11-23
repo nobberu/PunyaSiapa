@@ -26,7 +26,7 @@ class KomentarController
         $idPostingan = (int) $id;
         $postingan = (new Postingan())->find($idPostingan);
 
-        if ($postingan === null || $postingan['status_tampil'] === 'dihapus') {
+        if ($postingan === null || $postingan['status_tampil'] !== 'tampil') {
             $this->jsonResponse(false, 'Laporan tidak ditemukan.', 404);
         }
 
@@ -78,7 +78,7 @@ class KomentarController
         $komentarModel = new Komentar();
         $komentar = $komentarModel->find($idKomentar);
 
-        if ($komentar === null || $komentar['status_tampil'] === 'dihapus') {
+        if ($komentar === null || $komentar['status_tampil'] !== 'tampil') {
             $this->jsonResponse(false, 'Komentar tidak ditemukan.', 404);
         }
 

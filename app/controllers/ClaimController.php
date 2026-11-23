@@ -29,7 +29,7 @@ class ClaimController
         $idPostingan = (int) $id;
         $postingan = (new Postingan())->find($idPostingan);
 
-        if ($postingan === null || $postingan['status_tampil'] === 'dihapus') {
+        if ($postingan === null || $postingan['status_tampil'] !== 'tampil') {
             http_response_code(404);
             if ($r->isAjax()) {
                 header('Content-Type: application/json');

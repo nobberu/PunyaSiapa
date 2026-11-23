@@ -26,7 +26,7 @@ class Postingan
     {
         $sql = "SELECT * FROM v_postingan
                 WHERE jenis_postingan = :jenis
-                  AND status_tampil IS DISTINCT FROM 'dihapus'
+                  AND status_tampil = 'tampil'
                 ORDER BY created_at DESC";
 
         $stmt = $this->pdo->prepare($sql);
@@ -39,7 +39,7 @@ class Postingan
     {
         $sql = "SELECT * FROM v_postingan
                 WHERE id_pengguna = :id_pengguna
-                  AND status_tampil IS DISTINCT FROM 'dihapus'
+                  AND status_tampil IN ('tampil', 'disembunyikan')
                 ORDER BY created_at DESC";
 
         $stmt = $this->pdo->prepare($sql);
@@ -129,6 +129,28 @@ class Postingan
 
         return $stmt->execute(['id' => $id]);
     }
+    
+  /** Ubah visibilitas moderasi ('tampil' <-> 'disembunyikan'), tidak menyentuh 'dihapus'. */
+  public function setVisibility(int $id, string $status): bool
+  {
+      if (!in_array($status, ['tampil', 'disembunyikan'], true)) {
+          throw new InvalidArgumentException('Status visibilitas tidak valid.');
+      }
+
+      $stmt = $this->pdo->prepare(
+          "UPDATE postingan
+           SET status_tampil = :status
+           WHERE id_postingan = :id
+             AND status_tampil <> 'dihapus'"
+      );
+
+      $stmt->execute([
+          'status' => $status,
+          'id'     => $id,
+      ]);
+
+      return $stmt->rowCount() > 0;
+  }
     /**
      * Cari postingan menggunakan Full-Text Search.
      *
@@ -155,7 +177,7 @@ class Postingan
                 FROM v_postingan v,
                      websearch_to_tsquery('simple', :q) AS query
                 WHERE v.search_vector @@ query
-                  AND v.status_tampil IS DISTINCT FROM 'dihapus'
+                  AND v.status_tampil = 'tampil'
                   AND (:jenis = '' OR v.jenis_postingan = :jenis)
             )
             SELECT * FROM hasil_fts
