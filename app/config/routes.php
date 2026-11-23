@@ -32,6 +32,7 @@ $router->get("/kehilangan/{id:\d+}", "KehilanganController@show");
 $router->get("/kehilangan/{id:\d+}/edit", "KehilanganController@edit");
 $router->post("/kehilangan/{id:\d+}", "KehilanganController@update");
 $router->post("/kehilangan/{id:\d+}/delete", "KehilanganController@destroy");
+$router->post("/kehilangan/{id:\d+}/selesai", "KehilanganController@markDone");
 
 // Ditemukan (CRUD)
 $router->get("/ditemukan", "DitemukanController@index");
@@ -41,6 +42,7 @@ $router->get("/ditemukan/{id:\d+}", "DitemukanController@show");
 $router->get("/ditemukan/{id:\d+}/edit", "DitemukanController@edit");
 $router->post("/ditemukan/{id:\d+}", "DitemukanController@update");
 $router->post("/ditemukan/{id:\d+}/delete", "DitemukanController@destroy");
+$router->post("/ditemukan/{id:\d+}/selesai", "DitemukanController@markDone");
 
 // Komentar
 $router->post("/kehilangan/{id:\d+}/komentar", "KomentarController@store");
@@ -49,6 +51,8 @@ $router->post("/komentar/{id:\d+}/delete", "KomentarController@destroy");
 
 // Klaim
 $router->post("/ditemukan/{id:\d+}/claim", "ClaimController@store");
+$router->post("/ditemukan/{id:\d+}/claim/{claimId:\d+}/approve", "ClaimController@approve");
+$router->post("/ditemukan/{id:\d+}/claim/{claimId:\d+}/reject", "ClaimController@reject");
 
 // Report Pengguna (WBS 3.8.1)
 $router->post("/postingan/{id:\d+}/report", "ReportController@storePostingan");

@@ -129,66 +129,123 @@ class Postingan
 
         return $stmt->execute(['id' => $id]);
     }
-    
-  /** Ubah visibilitas moderasi ('tampil' <-> 'disembunyikan'), tidak menyentuh 'dihapus'. */
-  public function setVisibility(int $id, string $status): bool
-  {
-      if (!in_array($status, ['tampil', 'disembunyikan'], true)) {
-          throw new InvalidArgumentException('Status visibilitas tidak valid.');
-      }
 
-      $stmt = $this->pdo->prepare(
-          "UPDATE postingan
+    /** Ubah visibilitas moderasi ('tampil' <-> 'disembunyikan'), tidak menyentuh 'dihapus'. */
+    public function setVisibility(int $id, string $status): bool
+    {
+        if (!in_array($status, ['tampil', 'disembunyikan'], true)) {
+            throw new InvalidArgumentException('Status visibilitas tidak valid.');
+        }
+
+        $stmt = $this->pdo->prepare(
+            "UPDATE postingan
            SET status_tampil = :status
            WHERE id_postingan = :id
              AND status_tampil <> 'dihapus'"
-      );
+        );
 
-      $stmt->execute([
-          'status' => $status,
-          'id'     => $id,
-      ]);
+        $stmt->execute([
+            'status' => $status,
+            'id'     => $id,
+        ]);
 
-      return $stmt->rowCount() > 0;
-  }
+        return $stmt->rowCount() > 0;
+    }
+
+    /** Ubah status bisnis barang ('aktif' <-> 'selesai') hanya bila status_tampil = 'tampil'. */
+    public function setStatusBarang(int $id, string $status): bool
+    {
+        if (!in_array($status, ['aktif', 'selesai'], true)) {
+            throw new InvalidArgumentException('Status barang tidak valid.');
+        }
+
+        $stmt = $this->pdo->prepare(
+            "UPDATE postingan
+             SET status_barang = :status
+             WHERE id_postingan = :id
+               AND status_tampil = 'tampil'
+               AND status_barang <> :status_cek"
+        );
+
+        $stmt->execute([
+            'status'     => $status,
+            'id'         => $id,
+            'status_cek' => $status,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
     /**
-     * Cari postingan menggunakan Full-Text Search.
+     * Cari dan/atau filter postingan.
      *
-     * Memakai CTE untuk memisahkan filter + ranking dari SELECT akhir.
-     * websearch_to_tsquery mendukung frasa, AND, OR, minus (-).
+     * - Jika $q diisi: memakai CTE + Full-Text Search (websearch_to_tsquery + ts_rank)
+     *   digabung dengan filter jenis, kategori, dan status barang.
+     * - Jika $q kosong tetapi minimal 1 filter dipilih: menampilkan hasil terfilter terbaru.
      *
-     * @param  string $q     Kata kunci pencarian
-     * @param  string $jenis Filter: 'kehilangan', 'ditemukan', atau '' (semua)
+     * @param  string $q            Kata kunci pencarian (opsional jika ada filter)
+     * @param  string $jenis        'kehilangan', 'ditemukan', atau ''
+     * @param  int    $idKategori   ID kategori (> 0) atau 0 (semua)
+     * @param  string $statusBarang 'aktif', 'selesai', atau ''
      * @return array
      */
-    public function search(string $q, string $jenis = ''): array
-    {
+    public function search(
+        string $q = '',
+        string $jenis = '',
+        int $idKategori = 0,
+        string $statusBarang = ''
+    ): array {
         $q = trim($q);
 
-        if ($q === '') {
+        if ($q === '' && $jenis === '' && $idKategori <= 0 && $statusBarang === '') {
             return [];
         }
 
-        $sql = "
-            WITH hasil_fts AS (
-                SELECT
-                    v.*,
-                    ts_rank(v.search_vector, query) AS rank
-                FROM v_postingan v,
-                     websearch_to_tsquery('simple', :q) AS query
-                WHERE v.search_vector @@ query
-                  AND v.status_tampil = 'tampil'
-                  AND (:jenis = '' OR v.jenis_postingan = :jenis)
-            )
-            SELECT * FROM hasil_fts
-            ORDER BY rank DESC, created_at DESC
-        ";
+        $conditions = ["v.status_tampil = 'tampil'"];
+        $params     = [];
+
+        if ($jenis !== '') {
+            $conditions[]    = "v.jenis_postingan = :jenis";
+            $params['jenis'] = $jenis;
+        }
+
+        if ($idKategori > 0) {
+            $conditions[]          = "v.id_kategori = :id_kategori";
+            $params['id_kategori'] = $idKategori;
+        }
+
+        if ($statusBarang !== '') {
+            $conditions[]            = "v.status_barang = :status_barang";
+            $params['status_barang'] = $statusBarang;
+        }
+
+        $whereSql = implode("\n                  AND ", $conditions);
+
+        if ($q !== '') {
+            $params['q'] = $q;
+            $sql = "
+                WITH hasil_fts AS (
+                    SELECT
+                        v.*,
+                        ts_rank(v.search_vector, query) AS rank
+                    FROM v_postingan v,
+                         websearch_to_tsquery('simple', :q) AS query
+                    WHERE v.search_vector @@ query
+                      AND {$whereSql}
+                )
+                SELECT * FROM hasil_fts
+                ORDER BY rank DESC, created_at DESC
+            ";
+        } else {
+            $sql = "
+                SELECT v.*
+                FROM v_postingan v
+                WHERE {$whereSql}
+                ORDER BY v.created_at DESC
+            ";
+        }
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'q'     => $q,
-            'jenis' => $jenis,
-        ]);
+        $stmt->execute($params);
 
         return $stmt->fetchAll();
     }

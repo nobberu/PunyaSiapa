@@ -1,4 +1,5 @@
 <?php
+
 /** @var array $pengguna */
 /** @var array $statistik */
 /** @var array $kehilangan */
@@ -16,6 +17,13 @@ $fotoProfil = $pengguna['foto_profil'] ?? null;
 ?>
 
 <main class="profile">
+    <?php if (!empty($_SESSION['flash_profil'])): ?>
+        <?php $flashProfil = $_SESSION['flash_profil'];
+        unset($_SESSION['flash_profil']); ?>
+        <div class="alert <?= ($flashProfil['type'] ?? '') === 'error' ? 'alert-error' : 'alert-success' ?>" role="status">
+            <?= htmlspecialchars((string) ($flashProfil['message'] ?? '')) ?>
+        </div>
+    <?php endif; ?>
     <!-- Hero Profile Section -->
     <section class="card profile-hero" aria-labelledby="profil-nama">
         <!-- PFP / Initial Container -->
@@ -55,6 +63,8 @@ $fotoProfil = $pengguna['foto_profil'] ?? null;
             </header>
 
             <form action="<?= BASE_PATH ?>/profil/update" method="POST" enctype="multipart/form-data" class="edit-profile-form">
+                <input type="hidden" name="_csrf"
+                    value="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
                 <div class="avatar-upload-group">
                     <div class="avatar-preview" onclick="document.getElementById('pfpInput').click()">
                         <?php if (!empty($fotoProfil)): ?>
