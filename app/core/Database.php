@@ -27,11 +27,11 @@ class Database
         // Variabel dari config.php tersedia di scope global.
         global $db_host, $db_port, $db_user, $db_pass, $db_name;
 
-        $host = $db_host ?? 'localhost';
-        $port = $db_port ?? '5432';
-        $name = $db_name ?? 'punyasiapa';
-        $user = $db_user ?? 'postgres';
-        $pass = $db_pass ?? '';
+        $host = $db_host;
+        $port = $db_port;
+        $name = $db_name;
+        $user = $db_user;
+        $pass = $db_pass;
 
         $dsn = "pgsql:host={$host};port={$port};dbname={$name}";
 
