@@ -7,7 +7,7 @@
     }
 
     var ui = window.PunyaUI || {
-        toast: function () {},
+        toast: function () { },
         confirm: function (message) {
             return Promise.resolve(window.confirm(message));
         }
@@ -187,7 +187,8 @@
                     throw new Error(result.data.message || 'Gagal menghapus komentar.');
                 }
 
-                var item = document.getElementById('komentar-' + result.data.id_komentar);
+                var deletedId = result.data.data ? result.data.data.id_komentar : result.data.id_komentar;
+                var item = document.getElementById('komentar-' + deletedId);
                 if (item) {
                     item.remove();
                 }
@@ -200,37 +201,61 @@
         });
     }
 
-    if (claimButton) {
+    // --- Handler Modal Klaim Privat (Bukti Teks + Foto Opsional) ---
+    var claimDialog = document.getElementById('claim-dialog');
+    var claimForm = document.getElementById('form-claim');
+    var claimCancelBtn = document.getElementById('btn-batal-claim');
+    var claimSubmitBtn = document.getElementById('btn-kirim-claim');
+    var claimHint = document.getElementById('hint-klaim');
+
+    if (claimButton && claimDialog && claimForm) {
         claimButton.addEventListener('click', function () {
-            ui.confirm('Apakah kamu benar-benar pemilik dari barang ini?', {
-                title: 'Klaim barang',
-                confirmLabel: 'Ya, ajukan klaim'
-            }).then(function (confirmed) {
-                if (!confirmed) {
-                    return null;
+            claimForm.reset();
+            if (typeof claimDialog.showModal === 'function') {
+                claimDialog.showModal();
+            } else {
+                claimDialog.setAttribute('open', 'open');
+            }
+        });
+
+        if (claimCancelBtn) {
+            claimCancelBtn.addEventListener('click', function () {
+                if (typeof claimDialog.close === 'function') {
+                    claimDialog.close();
+                } else {
+                    claimDialog.removeAttribute('open');
                 }
+            });
+        }
 
-                var payload = new FormData();
-                payload.append('_csrf', csrf);
+        claimForm.addEventListener('submit', function (event) {
+            event.preventDefault();
 
-                claimButton.disabled = true;
+            if (claimSubmitBtn) {
+                claimSubmitBtn.disabled = true;
+                claimSubmitBtn.textContent = 'Mengirim...';
+            }
 
-                return requestJson(base + '/' + id + '/claim', {
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    body: payload
-                });
+            requestJson(claimForm.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(claimForm)
             }).then(function (result) {
-                if (!result) {
-                    return;
-                }
-
                 if (!result.ok || !result.data.success) {
                     throw new Error(result.data.message || 'Gagal mengajukan klaim.');
                 }
 
+                if (typeof claimDialog.close === 'function') {
+                    claimDialog.close();
+                } else {
+                    claimDialog.removeAttribute('open');
+                }
+
                 if (claimBox) {
                     claimBox.hidden = true;
+                }
+                if (claimHint) {
+                    claimHint.remove();
                 }
                 if (input) {
                     input.disabled = false;
@@ -240,7 +265,7 @@
                     submitButton.disabled = false;
                 }
 
-                ui.toast(result.data.message || 'Klaim berhasil dicatat.', 'success');
+                ui.toast(result.data.message || 'Klaim berhasil dikirim.', 'success');
 
                 if (input) {
                     input.focus();
@@ -248,10 +273,106 @@
             }).catch(function (error) {
                 ui.toast(error.message || 'Terjadi kesalahan koneksi.', 'error');
             }).finally(function () {
-                claimButton.disabled = false;
+                if (claimSubmitBtn) {
+                    claimSubmitBtn.disabled = false;
+                    claimSubmitBtn.textContent = 'Kirim Klaim';
+                }
             });
         });
     }
+    // --- Handler Modal Report (Postingan & Komentar) ---
+    var reportDialog = document.getElementById('report-dialog');
+    var reportForm = document.getElementById('form-report');
+    var reportTargetLabel = document.getElementById('report-dialog-target');
+    var reportKategori = document.getElementById('report-kategori');
+    var reportAlasan = document.getElementById('report-alasan');
+    var reportAlasanReq = document.getElementById('report-alasan-req');
+    var reportCancelBtn = document.getElementById('btn-batal-report');
+    var reportSubmitBtn = document.getElementById('btn-kirim-report');
 
+    function syncAlasanRequirement() {
+        if (!reportKategori || !reportAlasan) {
+            return;
+        }
+        var isOther = reportKategori.value === 'other';
+        reportAlasan.required = isOther;
+        if (reportAlasanReq) {
+            reportAlasanReq.textContent = isOther ? '(Wajib diisi)' : '(Opsional)';
+        }
+    }
+
+    if (reportDialog && reportForm) {
+        page.addEventListener('click', function (event) {
+            var trigger = event.target.closest('[data-report-trigger]');
+            if (!trigger) {
+                return;
+            }
+
+            reportForm.reset();
+            reportForm.action = trigger.dataset.reportUrl || '';
+            if (reportTargetLabel) {
+                reportTargetLabel.textContent = trigger.dataset.reportLabel || 'Laporkan konten ini';
+            }
+            syncAlasanRequirement();
+
+            if (typeof reportDialog.showModal === 'function') {
+                reportDialog.showModal();
+            } else {
+                reportDialog.setAttribute('open', 'open');
+            }
+        });
+
+        if (reportKategori) {
+            reportKategori.addEventListener('change', syncAlasanRequirement);
+        }
+
+        if (reportCancelBtn) {
+            reportCancelBtn.addEventListener('click', function () {
+                if (typeof reportDialog.close === 'function') {
+                    reportDialog.close();
+                } else {
+                    reportDialog.removeAttribute('open');
+                }
+            });
+        }
+
+        reportForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            if (!reportForm.action) {
+                return;
+            }
+
+            if (reportSubmitBtn) {
+                reportSubmitBtn.disabled = true;
+                reportSubmitBtn.textContent = 'Mengirim...';
+            }
+
+            requestJson(reportForm.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(reportForm)
+            }).then(function (result) {
+                if (!result.ok || !result.data.success) {
+                    throw new Error(result.data.message || 'Gagal mengirim laporan.');
+                }
+
+                if (typeof reportDialog.close === 'function') {
+                    reportDialog.close();
+                } else {
+                    reportDialog.removeAttribute('open');
+                }
+
+                ui.toast(result.data.message || 'Laporan berhasil dikirim.', 'success');
+            }).catch(function (error) {
+                ui.toast(error.message || 'Terjadi kesalahan jaringan.', 'error');
+            }).finally(function () {
+                if (reportSubmitBtn) {
+                    reportSubmitBtn.disabled = false;
+                    reportSubmitBtn.textContent = 'Kirim Laporan';
+                }
+            });
+        });
+    }
     updateCount();
 })();

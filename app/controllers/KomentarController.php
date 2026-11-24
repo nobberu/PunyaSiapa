@@ -4,6 +4,7 @@ require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../models/Komentar.php';
 require_once __DIR__ . '/../models/Postingan.php';
 require_once __DIR__ . '/../../src/http/request.php';
+require_once __DIR__ . '/../models/Claim.php';
 
 use punyaSiapa\Http\Request;
 
@@ -26,8 +27,27 @@ class KomentarController
         $idPostingan = (int) $id;
         $postingan = (new Postingan())->find($idPostingan);
 
-        if ($postingan === null || $postingan['status_tampil'] === 'dihapus') {
+        if ($postingan === null || $postingan['status_tampil'] !== 'tampil') {
             $this->jsonResponse(false, 'Laporan tidak ditemukan.', 404);
+        }
+
+        if ($postingan['status_barang'] === 'selesai') {
+            $this->jsonResponse(false, 'Laporan ini sudah selesai. Ruang diskusi telah ditutup.', 422);
+        }
+
+        // Untuk barang ditemukan: hanya penemu, admin, atau pengklaim aktif ('diajukan') yang boleh komentar
+        if ($postingan['jenis_postingan'] === 'ditemukan') {
+            $userId   = (int) Auth::id();
+            $isAuthor = ((int) $postingan['id_pengguna'] === $userId);
+            if (!$isAuthor && !Auth::isAdmin()) {
+                $userClaim = (new Claim())->findByUserAndPostingan($userId, $idPostingan);
+                if ($userClaim === null) {
+                    $this->jsonResponse(false, 'Ajukan klaim terlebih dahulu untuk membuka ruang diskusi.', 403);
+                }
+                if ($userClaim['status_claim'] === 'ditolak') {
+                    $this->jsonResponse(false, 'Klaim kamu telah ditolak oleh penemu, ruang diskusi terkunci.', 403);
+                }
+            }
         }
 
         $isiKomentar = trim((string) $r->post('isi_komentar'));
@@ -78,7 +98,7 @@ class KomentarController
         $komentarModel = new Komentar();
         $komentar = $komentarModel->find($idKomentar);
 
-        if ($komentar === null || $komentar['status_tampil'] === 'dihapus') {
+        if ($komentar === null || $komentar['status_tampil'] !== 'tampil') {
             $this->jsonResponse(false, 'Komentar tidak ditemukan.', 404);
         }
 

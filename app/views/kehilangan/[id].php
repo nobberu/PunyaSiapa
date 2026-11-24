@@ -23,7 +23,13 @@ $statusClass = $status === 'selesai' ? 'badge badge-selesai' : 'badge badge-akti
     data-csrf="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
 
     <a class="back-link" href="<?= $base ?>">&larr; Kembali ke daftar</a>
-
+    <?php if (!empty($_SESSION['flash_detail'])): ?>
+        <?php $flashDetail = $_SESSION['flash_detail'];
+        unset($_SESSION['flash_detail']); ?>
+        <div class="alert <?= ($flashDetail['type'] ?? '') === 'error' ? 'alert-error' : 'alert-success' ?>" role="status">
+            <?= htmlspecialchars((string) ($flashDetail['message'] ?? '')) ?>
+        </div>
+    <?php endif; ?>
     <?php if (!empty($_SESSION['error_komentar'])): ?>
         <div class="alert alert-error" role="alert" data-autohide="6000">
             <?= htmlspecialchars($_SESSION['error_komentar']) ?>
@@ -68,7 +74,16 @@ $statusClass = $status === 'selesai' ? 'badge badge-selesai' : 'badge badge-akti
     <?php if ($canManage): ?>
         <div class="detail-actions">
             <a class="btn btn-tonal" href="<?= $base ?>/<?= (int) $id ?>/edit">Edit laporan</a>
-
+            <?php if (($postingan['status_barang'] ?? 'aktif') !== 'selesai'): ?>
+                <form class="inline-form" method="post"
+                    action="<?= $base ?>/<?= (int) $id ?>/selesai"
+                    data-confirm="Tandai laporan kehilangan ini sebagai Selesai (barang sudah ditemukan)? Ruang diskusi akan ditutup."
+                    data-confirm-label="Ya, tandai selesai">
+                    <input type="hidden" name="_csrf"
+                        value="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                    <button class="btn" type="submit">Tandai Selesai</button>
+                </form>
+            <?php endif; ?>
             <form class="inline-form" method="post"
                 action="<?= $base ?>/<?= (int) $id ?>/delete"
                 data-confirm="Hapus laporan ini? Tindakan ini tidak bisa dibatalkan."
@@ -79,8 +94,20 @@ $statusClass = $status === 'selesai' ? 'badge badge-selesai' : 'badge badge-akti
             </form>
         </div>
     <?php endif; ?>
+    <?php if (Auth::check() && (int) $postingan['id_pengguna'] !== (int) Auth::id()): ?>
+        <div class="detail-actions">
+            <button class="btn btn-outlined btn-sm"
+                type="button"
+                data-report-trigger
+                data-report-url="<?= BASE_PATH ?>/postingan/<?= (int) $id ?>/report"
+                data-report-label="Postingan: <?= htmlspecialchars($postingan['nama_barang'], ENT_QUOTES, 'UTF-8') ?>">
+                Laporkan postingan
+            </button>
+        </div>
+    <?php endif; ?>
 
     <?php require __DIR__ . '/../partials/diskusi.php'; ?>
+    <?php require __DIR__ . '/../partials/report-modal.php'; ?>
 </main>
 
 <script src="<?= BASE_PATH ?>/js/detail.js" defer></script>

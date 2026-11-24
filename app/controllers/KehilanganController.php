@@ -94,13 +94,15 @@ class KehilanganController
             return;
         }
 
-        $idInt = (int) $id;
+        $idInt     = (int) $id;
+        $isSelesai = ($postingan['status_barang'] === 'selesai');
 
         echo View::render('kehilangan/[id]', [
-            'id'          => $idInt,
-            'postingan'   => $postingan,
-            'komentar'    => (new Komentar())->forPostingan($idInt),
-            'canComment'  => true, // Di laporan kehilangan, siapa pun yang login boleh bertanya/menjawab
+            'id'         => $idInt,
+            'postingan'  => $postingan,
+            'komentar'   => (new Komentar())->forPostingan($idInt),
+            'isSelesai'  => $isSelesai,
+            'canComment' => !$isSelesai,
         ]);
     }
 
@@ -187,6 +189,34 @@ class KehilanganController
         (new Postingan())->softDelete((int) $id);
 
         header('Location: ' . BASE_PATH . '/' . self::JENIS);
+        exit;
+    }
+
+    /** Konfirmasi cepat 1-klik: ubah status_barang menjadi 'selesai' (khusus Pemilik/Admin). */
+    public function markDone($id)
+    {
+        Auth::requireLogin();
+
+        $postingan = $this->findOwned($id);
+        if ($postingan === null) {
+            return;
+        }
+
+        $r = new Request();
+        if (!Auth::verifyCsrf($r->post('_csrf'))) {
+            http_response_code(403);
+            echo 'Permintaan tidak valid. Muat ulang halaman dan coba lagi.';
+            return;
+        }
+
+        $idInt   = (int) $id;
+        $updated = (new Postingan())->setStatusBarang($idInt, 'selesai');
+
+        $_SESSION['flash_detail'] = $updated
+            ? ['type' => 'success', 'message' => 'Laporan ditandai Selesai. Ruang diskusi telah ditutup.']
+            : ['type' => 'error', 'message' => 'Laporan ini sudah berstatus Selesai.'];
+
+        header('Location: ' . BASE_PATH . '/' . self::JENIS . '/' . $idInt);
         exit;
     }
 
@@ -323,7 +353,7 @@ class KehilanganController
         if (
             $postingan === null ||
             $postingan['jenis_postingan'] !== self::JENIS ||
-            $postingan['status_tampil'] === 'dihapus'
+            $postingan['status_tampil'] !== 'tampil'
         ) {
             http_response_code(404);
             echo '404 Not Found';

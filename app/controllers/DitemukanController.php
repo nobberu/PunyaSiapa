@@ -95,21 +95,32 @@ class DitemukanController
             return;
         }
 
-        $idInt = (int) $id;
-        $userId = (int) Auth::id();
+        $idInt      = (int) $id;
+        $userId     = (int) Auth::id();
         $claimModel = new Claim();
 
-        // Cek apakah user adalah pembuat laporan, admin, atau sudah klaim
-        $hasClaimed = $claimModel->hasUserClaimed($userId, $idInt);
-        $isAuthor = ((int) $postingan['id_pengguna'] === $userId);
-        $canComment = ($isAuthor || Auth::isAdmin() || $hasClaimed);
+        $isAuthor       = ((int) $postingan['id_pengguna'] === $userId);
+        $canManageClaim = ($isAuthor || Auth::isAdmin());
+        $isSelesai      = ($postingan['status_barang'] === 'selesai');
+        $userClaim      = $claimModel->findByUserAndPostingan($userId, $idInt);
+        $hasActiveClaim = ($userClaim !== null && $userClaim['status_claim'] === 'diajukan');
+
+        // Privasi: daftar bukti klaim HANYA dikirim bila user adalah Penemu atau Admin
+        $daftarKlaim = $canManageClaim ? $claimModel->forPostingan($idInt) : [];
+
+        // Kotak diskusi terkunci otomatis bila status_barang === 'selesai' atau klaim ditolak
+        $canComment = !$isSelesai && ($canManageClaim || $hasActiveClaim);
 
         echo View::render('ditemukan/[id]', [
-            'id'          => $idInt,
-            'postingan'   => $postingan,
-            'komentar'    => (new Komentar())->forPostingan($idInt),
-            'hasClaimed'  => $hasClaimed,
-            'canComment'  => $canComment,
+            'id'             => $idInt,
+            'postingan'      => $postingan,
+            'komentar'       => (new Komentar())->forPostingan($idInt),
+            'hasClaimed'     => ($userClaim !== null),
+            'userClaim'      => $userClaim,
+            'daftarKlaim'    => $daftarKlaim,
+            'canManageClaim' => $canManageClaim,
+            'isSelesai'      => $isSelesai,
+            'canComment'     => $canComment,
         ]);
     }
 
@@ -196,6 +207,34 @@ class DitemukanController
         (new Postingan())->softDelete((int) $id);
 
         header('Location: ' . BASE_PATH . '/' . self::JENIS);
+        exit;
+    }
+
+    /** Konfirmasi cepat 1-klik: ubah status_barang menjadi 'selesai' (khusus Pemilik/Admin). */
+    public function markDone($id)
+    {
+        Auth::requireLogin();
+
+        $postingan = $this->findOwned($id);
+        if ($postingan === null) {
+            return;
+        }
+
+        $r = new Request();
+        if (!Auth::verifyCsrf($r->post('_csrf'))) {
+            http_response_code(403);
+            echo 'Permintaan tidak valid. Muat ulang halaman dan coba lagi.';
+            return;
+        }
+
+        $idInt   = (int) $id;
+        $updated = (new Postingan())->setStatusBarang($idInt, 'selesai');
+
+        $_SESSION['flash_detail'] = $updated
+            ? ['type' => 'success', 'message' => 'Laporan ditandai Selesai. Diskusi dan klaim baru telah ditutup.']
+            : ['type' => 'error', 'message' => 'Laporan ini sudah berstatus Selesai.'];
+
+        header('Location: ' . BASE_PATH . '/' . self::JENIS . '/' . $idInt);
         exit;
     }
 
@@ -332,7 +371,7 @@ class DitemukanController
         if (
             $postingan === null ||
             $postingan['jenis_postingan'] !== self::JENIS ||
-            $postingan['status_tampil'] === 'dihapus'
+            $postingan['status_tampil'] !== 'tampil'
         ) {
             http_response_code(404);
             echo '404 Not Found';

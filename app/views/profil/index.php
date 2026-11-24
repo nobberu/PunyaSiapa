@@ -1,5 +1,10 @@
 <?php
 
+/** @var array $pengguna */
+/** @var array $statistik */
+/** @var array $kehilangan */
+/** @var array $ditemukan */
+
 $title       = 'Profil - PunyaSiapa';
 $styles      = ['components/postingan', 'pages/profile'];
 $peran       = ($pengguna['role'] ?? '') === 'admin' ? 'Admin' : 'Pengguna';
@@ -12,6 +17,13 @@ $fotoProfil = $pengguna['foto_profil'] ?? null;
 ?>
 
 <main class="profile">
+    <?php if (!empty($_SESSION['flash_profil'])): ?>
+        <?php $flashProfil = $_SESSION['flash_profil'];
+        unset($_SESSION['flash_profil']); ?>
+        <div class="alert <?= ($flashProfil['type'] ?? '') === 'error' ? 'alert-error' : 'alert-success' ?>" role="status">
+            <?= htmlspecialchars((string) ($flashProfil['message'] ?? '')) ?>
+        </div>
+    <?php endif; ?>
     <!-- Hero Profile Section -->
     <section class="card profile-hero" aria-labelledby="profil-nama">
         <!-- PFP / Initial Container -->
@@ -38,6 +50,7 @@ $fotoProfil = $pengguna['foto_profil'] ?? null;
             <button type="button" class="btn btn-outlined" onclick="openEditModal()">Edit Profil</button>
             <a class="btn btn-tonal" href="<?= $kehilanganBase ?>/create">Lapor kehilangan</a>
             <a class="btn btn-outlined" href="<?= $ditemukanBase ?>/create">Lapor temuan</a>
+            <a class="btn btn-outlined" href="<?= BASE_PATH ?>/laporan-saya">Laporan saya</a>
         </div>
     </section>
 
@@ -50,6 +63,8 @@ $fotoProfil = $pengguna['foto_profil'] ?? null;
             </header>
 
             <form action="<?= BASE_PATH ?>/profil/update" method="POST" enctype="multipart/form-data" class="edit-profile-form">
+                <input type="hidden" name="_csrf"
+                    value="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
                 <div class="avatar-upload-group">
                     <div class="avatar-preview" onclick="document.getElementById('pfpInput').click()">
                         <?php if (!empty($fotoProfil)): ?>
@@ -144,56 +159,56 @@ $fotoProfil = $pengguna['foto_profil'] ?? null;
 </main>
 
 <script>
-function openEditModal() {
-    const modal = document.getElementById('editProfileModal');
-    if (typeof modal.showModal === 'function') {
-        modal.showModal();
-    } else {
-        modal.setAttribute('open', 'true');
+    function openEditModal() {
+        const modal = document.getElementById('editProfileModal');
+        if (typeof modal.showModal === 'function') {
+            modal.showModal();
+        } else {
+            modal.setAttribute('open', 'true');
+        }
     }
-}
 
-function closeEditModal() {
-    const modal = document.getElementById('editProfileModal');
-    if (typeof modal.close === 'function') {
-        modal.close();
-    } else {
-        modal.removeAttribute('open');
+    function closeEditModal() {
+        const modal = document.getElementById('editProfileModal');
+        if (typeof modal.close === 'function') {
+            modal.close();
+        } else {
+            modal.removeAttribute('open');
+        }
     }
-}
 
-function getInitials(name) {
-    const trimmed = name.trim();
-    if (!trimmed) return '??';
-    const parts = trimmed.split(/\s+/);
-    if (parts.length >= 2) {
-        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    function getInitials(name) {
+        const trimmed = name.trim();
+        if (!trimmed) return '??';
+        const parts = trimmed.split(/\s+/);
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+        return parts[0].substring(0, 2).toUpperCase();
     }
-    return parts[0].substring(0, 2).toUpperCase();
-}
 
-function syncModalInitial(name) {
-    const imgEl = document.getElementById('modalPfpImg');
-    const initialEl = document.getElementById('modalPfpInitial');
-    
-    if (imgEl.classList.contains('hidden') || !imgEl.src) {
-        initialEl.textContent = getInitials(name);
-    }
-}
-
-function previewAvatar(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
+    function syncModalInitial(name) {
         const imgEl = document.getElementById('modalPfpImg');
         const initialEl = document.getElementById('modalPfpInitial');
 
-        imgEl.src = e.target.result;
-        imgEl.classList.remove('hidden');
-        initialEl.classList.add('hidden');
-    };
-    reader.readAsDataURL(file);
-}
+        if (imgEl.classList.contains('hidden') || !imgEl.src) {
+            initialEl.textContent = getInitials(name);
+        }
+    }
+
+    function previewAvatar(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imgEl = document.getElementById('modalPfpImg');
+            const initialEl = document.getElementById('modalPfpInitial');
+
+            imgEl.src = e.target.result;
+            imgEl.classList.remove('hidden');
+            initialEl.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
 </script>
