@@ -2,7 +2,7 @@ Options -Multiviews
 RewriteEngine On
 
 # Sesuaikan jika nama folder/URL aplikasi berbeda.
-RewriteBase /PunyaSiapa/public/
+RewriteBase /
 
 # File atau folder yang benar-benar ada dilayani langsung (css, js, img, uploads).
 RewriteCond %{REQUEST_FILENAME} !-f
